@@ -1,5 +1,6 @@
 import type { BuildSystemPromptOptions, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { PromptCompileOptions, PromptRuntimeSnapshot } from "./types.ts";
+import { UNSUPPORTED_HOST_MESSAGE } from "./host-compatibility.ts";
 
 /**
  * Convert Pi's extension-runtime prompt-building inputs into the host-neutral
@@ -7,7 +8,7 @@ import type { PromptCompileOptions, PromptRuntimeSnapshot } from "./types.ts";
  * `BuildSystemPromptOptions` / `ExtensionContext` into `PromptRuntimeSnapshot`.
  */
 export function promptRuntimeFromPi(
-	options: BuildSystemPromptOptions,
+	options: BuildSystemPromptOptions | undefined,
 	ctx: Pick<ExtensionContext, "model"> | undefined,
 	latestUserMessage?: string,
 	now: Date = new Date(),
@@ -26,11 +27,12 @@ export function promptRuntimeFromPi(
  * consumer; it deliberately does not require Pi runtime types.
  */
 export function promptRuntimeFromCompileOptions(
-	options: PromptCompileOptions,
+	options: PromptCompileOptions | undefined,
 	model?: { provider: string; id: string; api?: string },
 	latestUserMessage?: string,
 	now: Date = new Date(),
 ): PromptRuntimeSnapshot {
+	if (!options) throw new Error(UNSUPPORTED_HOST_MESSAGE);
 	return {
 		options: {
 			cwd: options.cwd,

@@ -47,6 +47,7 @@ export interface AgentProfileApplicationState {
     lastAppliedProfile?: AgentProfileProvenance;
 }
 export interface AgentProfileApplicationDeps {
+    activationError?(ctx?: ExtensionContext): string | undefined;
     setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
 }
 export type AgentProfileApplicationResult = {

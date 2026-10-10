@@ -18,7 +18,7 @@ export function createProfileRuntime(pi, workspace, deps) {
         // D3: auto-activation is an application action. Untrusted projects may
         // browse global definitions, but they must not apply global profiles or
         // activate global presets during a fresh session.
-        if (!ctx.isProjectTrusted())
+        if (!ctx.isProjectTrusted() || deps.activationError?.(ctx))
             return;
         const snapshot = workspace.snapshot();
         const candidates = findAutoActivateAgentProfileCandidates(snapshot.profiles);
@@ -42,7 +42,7 @@ export function createProfileRuntime(pi, workspace, deps) {
             ctx.ui.notify(`pi-forge: auto-activation profile ${target.profile.id} failed preflight; no profile or fallback preset was applied. ${renderAgentProfileDiagnostics(resolved.diagnostics)}`, "error");
             return;
         }
-        const result = await applyResolvedAgentProfile(pi, workspace, { setActive: deps.setActive }, resolved, ctx);
+        const result = await applyResolvedAgentProfile(pi, workspace, deps, resolved, ctx);
         if (!result.ok) {
             const rollbackSuffix = result.rollbackErrors.length > 0 ? ` Rollback problems: ${result.rollbackErrors.join("; ")}.` : "";
             const detail = result.detail.endsWith(".") ? result.detail : `${result.detail}.`;

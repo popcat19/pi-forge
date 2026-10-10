@@ -58,6 +58,7 @@ export interface AgentProfileApplicationState {
 }
 
 export interface AgentProfileApplicationDeps {
+	activationError?(ctx?: ExtensionContext): string | undefined;
 	setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
 }
 
@@ -210,6 +211,8 @@ export async function applyResolvedAgentProfile(
 	resolved: ResolvedAgentProfile,
 	ctx: ExtensionContext,
 ): Promise<AgentProfileApplicationResult> {
+	const hostError = deps.activationError?.(ctx);
+	if (hostError) return { ok: false, detail: hostError, rollbackErrors: [] };
 	if (!isResolvedAgentProfileUsable(resolved) || !resolved.model) {
 		return { ok: false, detail: "Profile failed preflight; runtime state was not changed", rollbackErrors: [] };
 	}

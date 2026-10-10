@@ -16,6 +16,7 @@ import { ForgeWorkspace } from "./workspace.js";
 import { createToolPolicyRuntime } from "./runtime/tool-policy-runtime.js";
 import { createWebEditorRuntime } from "./runtime/web-editor-runtime.js";
 import { createCompileCycleState } from "./compile-cycle.js";
+import { createHostCompatibility } from "./host-compatibility.js";
 import { getContextDiffView, getLatestContextDiffUsage } from "./context-diff-history.js";
 import { createPayloadState } from "./payload-state.js";
 /**
@@ -49,6 +50,7 @@ export default function piForge(pi) {
     // Optional observer: publishes on reload, active-stack/profile changes, and
     // web-editor mutations without any provider/model/tool-policy side effect.
     workspace.subscribe(() => activeState.publish());
+    const hostCompatibility = createHostCompatibility();
     const compileCycle = createCompileCycleState();
     const payloadState = createPayloadState();
     const currentActive = () => workspace.snapshotKnown ? workspace.snapshot().active : undefined;
@@ -57,13 +59,16 @@ export default function piForge(pi) {
     let profileRuntime;
     const stackRuntime = createPromptStackRuntime(pi, workspace, compileCycle, {
         syncToolPolicy: instructions.sync,
+        activationError: hostCompatibility.activationError,
         validatePresetSwitch: instructions.validatePresetSwitch,
     });
     profileRuntime = createProfileRuntime(pi, workspace, {
+        activationError: hostCompatibility.activationError,
         setActive: (id, ctx) => stackRuntime.setActive(id, ctx),
         updateStatus: stackRuntime.updateStatus,
     });
     const webEditorRuntime = createWebEditorRuntime((ctx, promptOptions) => ({
+        activationError: hostCompatibility.activationError,
         readCapabilities: () => workspace.reloadCapabilities(ctx.cwd, ctx.isProjectTrusted()).capabilities,
         readCapabilityState: () => instructions.readState(),
         readCapabilityChoices: () => instructions.readAvailableCapabilities(),
@@ -94,7 +99,7 @@ export default function piForge(pi) {
         previewToolNames: (stack) => toolPolicy.previewToolNames(stack),
         reloadProfiles: () => profileRuntime.reloadProfiles(ctx),
         isIdle: () => typeof ctx.isIdle === "function" && ctx.isIdle(),
-        applyProfile: (resolved) => applyResolvedAgentProfile(pi, workspace, { setActive: (id) => stackRuntime.setActive(id, ctx) }, resolved, ctx),
+        applyProfile: (resolved) => applyResolvedAgentProfile(pi, workspace, { setActive: (id) => stackRuntime.setActive(id, ctx), activationError: hostCompatibility.activationError }, resolved, ctx),
         getPayload: () => ({ ok: true, ...webPayloadSnapshot(payloadState) }),
         armPayload: (savePath) => {
             armPayloadIntercept(payloadState, ctx, savePath, "web");
@@ -105,8 +110,9 @@ export default function piForge(pi) {
             return { ok: true, ...webPayloadSnapshot(payloadState) };
         },
         getContextDiff: () => ({ ok: true, ...getContextDiffView(payloadState.contextDiffHistory) }),
-    }), () => pi.events);
+    }), () => pi.events, hostCompatibility);
     registerLifecycleHandlers(pi, workspace, compileCycle, {
+        hostCompatibility,
         reloadStacks: stackRuntime.reloadStacks,
         disposePromptStackRuntime: stackRuntime.dispose,
         activateFreshSessionDefaults: profileRuntime.activateFreshSessionDefaults,
@@ -144,6 +150,7 @@ export default function piForge(pi) {
     const payloadCommand = registerPayloadCommands(pi, payloadState);
     registerForgeCommand(pi, { openWebEditor: webEditorRuntime.open, stopWebEditor: webEditorRuntime.stop }, payloadCommand);
     registerPresetCommand(pi, workspace, compileCycle, {
+        hostCompatibility,
         selectedActiveId: stackRuntime.selectedActiveId,
         setActive: stackRuntime.setActive,
         lastActivationError: stackRuntime.lastActivationError,
@@ -153,6 +160,7 @@ export default function piForge(pi) {
         latestContextDiffUsage: () => getLatestContextDiffUsage(payloadState.contextDiffHistory),
     });
     registerProfileCommand(pi, workspace, compileCycle, {
+        activationError: hostCompatibility.activationError,
         reloadProfiles: profileRuntime.reloadProfiles,
         resolveProfile: profileRuntime.resolveProfile,
         setActive: stackRuntime.setActive,

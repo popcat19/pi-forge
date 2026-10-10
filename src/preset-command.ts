@@ -1,4 +1,5 @@
 import { handleForgeUi } from "./forge-command.ts";
+import type { HostCompatibility } from "./host-compatibility.ts";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { isDisabledPromptStackId, promptStackReadDirs } from "./loader.ts";
 import { resolveResourceSelector } from "./catalog.ts";
@@ -13,6 +14,7 @@ import { promptCacheWarningForStackSwitch } from "./prompt-cache-warning.ts";
 import type { LoadedPromptStack } from "./types.ts";
 
 export interface PresetCommandDeps {
+	hostCompatibility?: HostCompatibility;
 	selectedActiveId(): string | undefined;
 	setActive(id: string | undefined, ctx?: ExtensionCommandContext): boolean;
 	lastActivationError?(): string | undefined;
@@ -146,7 +148,7 @@ async function handlePresetCommand(
 				ctx.ui.notify(rest[0] ? `Unknown preset: ${rest[0]}` : "No active preset.", "warning");
 				return;
 			}
-			await showText(ctx, `pi-forge preview: ${target.stack.id}`, renderPreview(ctx, target));
+			await showText(ctx, `pi-forge preview: ${target.stack.id}`, renderPreview(ctx, target, deps.hostCompatibility));
 			return;
 		}
 

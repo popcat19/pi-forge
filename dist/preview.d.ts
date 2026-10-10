@@ -1,4 +1,5 @@
 import { type ExtensionCommandContext, type ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { type HostCompatibility } from "./host-compatibility.ts";
 import type { LoadedPromptStack, PromptCompileOptions, PromptStackDiagnostic } from "./types.ts";
 import type { WebEditorPreview } from "./web-editor/index.ts";
 /**
@@ -6,7 +7,7 @@ import type { WebEditorPreview } from "./web-editor/index.ts";
  * Evaluates the selected draft against current session capability snapshots without
  * mutating runtime state, applying tool policy, or marking preparation.
  */
-export declare function renderPreview(ctx: ExtensionCommandContext, target: LoadedPromptStack): string;
+export declare function renderPreview(ctx: ExtensionCommandContext, target: LoadedPromptStack, host?: HostCompatibility): string;
 /**
  * Build a structured preview and text rendering for a prompt stack.
  *

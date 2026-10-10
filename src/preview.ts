@@ -17,6 +17,7 @@ import { estimatePayloadTokens } from "./payload-capture.ts";
 import { hashText } from "./context-diff.ts";
 import { isTrulyEmptySystemSection, previewSectionText } from "./preview-text.ts";
 import { promptRuntimeFromCompileOptions } from "./prompt-runtime.ts";
+import { createHostCompatibility, UNSUPPORTED_HOST_MESSAGE, type HostCompatibility } from "./host-compatibility.ts";
 import {
 	getPiBasePrompt,
 	projectCapabilityMessages,
@@ -42,8 +43,10 @@ import type { WebEditorPreview, WebEditorPreviewSection } from "./web-editor/ind
 export function renderPreview(
 	ctx: ExtensionCommandContext,
 	target: LoadedPromptStack,
+	host: HostCompatibility = createHostCompatibility(),
 ): string {
-	return buildPreview(ctx, target, ctx.getSystemPromptOptions()).text;
+	const options = host.readPromptOptions(ctx);
+	return options ? buildPreview(ctx, target, options).text : UNSUPPORTED_HOST_MESSAGE;
 }
 
 /**

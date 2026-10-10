@@ -7,6 +7,7 @@ export interface ProfileRuntime {
     activateFreshSessionDefaults(ctx: ExtensionContext): Promise<void>;
 }
 export declare function createProfileRuntime(pi: ExtensionAPI, workspace: ForgeWorkspace, deps: {
+    activationError?(ctx?: ExtensionContext): string | undefined;
     setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
     updateStatus(ctx: ExtensionContext): void;
 }): ProfileRuntime;

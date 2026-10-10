@@ -1,5 +1,6 @@
 import type { BuildSystemPromptOptions, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { showText } from "../preview.ts";
+import { createHostCompatibility, type HostCompatibility } from "../host-compatibility.ts";
 import type { UiContributionTransport } from "../ui-contribution/contrib-port.ts";
 import { createWebEditorHost, loadWebEditorSettings, type WebHostRuntime } from "../web-host.ts";
 import { startWebEditorServer, type WebEditorServer } from "../web-editor/index.ts";
@@ -30,6 +31,7 @@ export interface WebEditorRuntime {
 export function createWebEditorRuntime(
 	createRuntime: (ctx: ExtensionContext, promptOptions: BuildSystemPromptOptions) => WebHostRuntime,
 	getContributionTransport?: () => UiContributionTransport,
+	host: HostCompatibility = createHostCompatibility(),
 ): WebEditorRuntime {
 	const sharedWebEditors = getSharedWebEditorRegistry();
 	let webEditor: WebEditorServer | undefined;
@@ -90,7 +92,9 @@ export function createWebEditorRuntime(
 
 	async function open(ctx: ExtensionCommandContext, mode: "open" | "restart" = "open"): Promise<void> {
 		syncFromShared(ctx.cwd);
-		promptOptions = snapshotPromptOptions(ctx.getSystemPromptOptions());
+		const options = host.readPromptOptions(ctx);
+		if (!options) return;
+		promptOptions = snapshotPromptOptions(options);
 		const settings = loadWebEditorSettings(ctx);
 		for (const warning of settings.warnings) ctx.ui.notify(warning, "warning");
 

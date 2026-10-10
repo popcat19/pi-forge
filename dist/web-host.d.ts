@@ -7,6 +7,7 @@ import type { ContextDiffView } from "./context-diff-history.ts";
 import type { LoadedPromptStack, PromptStack, PromptStackDiagnostic } from "./types.ts";
 import type { WebEditorLocale, WebEditorHost, WebEditorOperationResult, WebEditorPayloadSnapshot, WebEditorPolicyResources, WebEditorPreview, WebEditorStackSummary } from "./web-editor/index.ts";
 export interface WebHostRuntime {
+    activationError?(): string | undefined;
     readCapabilities?(): readonly LoadedCapability[];
     getStacks(): LoadedPromptStack[];
     getActive(): LoadedPromptStack | undefined;

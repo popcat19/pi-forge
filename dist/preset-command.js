@@ -115,7 +115,7 @@ async function handlePresetCommand(workspace, compileCycle, deps, args, ctx) {
                 ctx.ui.notify(rest[0] ? `Unknown preset: ${rest[0]}` : "No active preset.", "warning");
                 return;
             }
-            await showText(ctx, `pi-forge preview: ${target.stack.id}`, renderPreview(ctx, target));
+            await showText(ctx, `pi-forge preview: ${target.stack.id}`, renderPreview(ctx, target, deps.hostCompatibility));
             return;
         }
         case "validate": {

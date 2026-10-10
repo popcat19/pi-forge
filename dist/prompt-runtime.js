@@ -1,3 +1,4 @@
+import { UNSUPPORTED_HOST_MESSAGE } from "./host-compatibility.js";
 /**
  * Convert Pi's extension-runtime prompt-building inputs into the host-neutral
  * compiler snapshot. This is the only adapter that should translate
@@ -12,6 +13,8 @@ export function promptRuntimeFromPi(options, ctx, latestUserMessage, now = new D
  * consumer; it deliberately does not require Pi runtime types.
  */
 export function promptRuntimeFromCompileOptions(options, model, latestUserMessage, now = new Date()) {
+    if (!options)
+        throw new Error(UNSUPPORTED_HOST_MESSAGE);
     return {
         options: {
             cwd: options.cwd,

@@ -5,6 +5,7 @@ import { estimatePayloadTokens } from "./payload-capture.js";
 import { hashText } from "./context-diff.js";
 import { isTrulyEmptySystemSection, previewSectionText } from "./preview-text.js";
 import { promptRuntimeFromCompileOptions } from "./prompt-runtime.js";
+import { createHostCompatibility, UNSUPPORTED_HOST_MESSAGE } from "./host-compatibility.js";
 import { getPiBasePrompt, projectCapabilityMessages, projectPresetSystemPrompt, } from "./capability-projection.js";
 import { getCurrentBranchEntries, readCapabilitySession } from "./session-adapter.js";
 import { isCapabilityDelivery } from "./capability-protocol.js";
@@ -16,8 +17,9 @@ import { buildSectionInspection, createInspectionTracker, resolveInspectionScope
  * Evaluates the selected draft against current session capability snapshots without
  * mutating runtime state, applying tool policy, or marking preparation.
  */
-export function renderPreview(ctx, target) {
-    return buildPreview(ctx, target, ctx.getSystemPromptOptions()).text;
+export function renderPreview(ctx, target, host = createHostCompatibility()) {
+    const options = host.readPromptOptions(ctx);
+    return options ? buildPreview(ctx, target, options).text : UNSUPPORTED_HOST_MESSAGE;
 }
 /**
  * Build a structured preview and text rendering for a prompt stack.

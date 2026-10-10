@@ -5,6 +5,7 @@ import type { ContextDiffProviderUsage } from "./context-diff-history.ts";
 import type { ForgeWorkspace } from "./workspace.ts";
 import type { PromptStack } from "./types.ts";
 export interface ProfileCommandDeps {
+    activationError?(ctx?: ExtensionContext): string | undefined;
     reloadProfiles(ctx: ExtensionContext): void | Promise<void>;
     resolveProfile(target: LoadedAgentProfile, ctx: ExtensionContext): ResolvedAgentProfile;
     setActive(id: string | undefined, ctx?: ExtensionContext): boolean;

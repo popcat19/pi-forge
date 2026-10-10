@@ -1,8 +1,9 @@
 import { showText } from "../preview.js";
+import { createHostCompatibility } from "../host-compatibility.js";
 import { createWebEditorHost, loadWebEditorSettings } from "../web-host.js";
 import { startWebEditorServer } from "../web-editor/index.js";
 const WEB_EDITOR_GLOBAL_KEY = "__piForgeWebEditor";
-export function createWebEditorRuntime(createRuntime, getContributionTransport) {
+export function createWebEditorRuntime(createRuntime, getContributionTransport, host = createHostCompatibility()) {
     const sharedWebEditors = getSharedWebEditorRegistry();
     let webEditor;
     let webEditorCwd;
@@ -59,7 +60,10 @@ export function createWebEditorRuntime(createRuntime, getContributionTransport) 
     }
     async function open(ctx, mode = "open") {
         syncFromShared(ctx.cwd);
-        promptOptions = snapshotPromptOptions(ctx.getSystemPromptOptions());
+        const options = host.readPromptOptions(ctx);
+        if (!options)
+            return;
+        promptOptions = snapshotPromptOptions(options);
         const settings = loadWebEditorSettings(ctx);
         for (const warning of settings.warnings)
             ctx.ui.notify(warning, "warning");

@@ -1,9 +1,11 @@
+import type { HostCompatibility } from "./host-compatibility.ts";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import type { CompileCycleState } from "./compile-cycle.ts";
 import type { ForgeWorkspace } from "./workspace.ts";
 import type { ContextDiffProviderUsage } from "./context-diff-history.ts";
 import type { LoadedPromptStack } from "./types.ts";
 export interface PresetCommandDeps {
+    hostCompatibility?: HostCompatibility;
     selectedActiveId(): string | undefined;
     setActive(id: string | undefined, ctx?: ExtensionCommandContext): boolean;
     lastActivationError?(): string | undefined;

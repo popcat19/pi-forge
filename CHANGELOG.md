@@ -8,6 +8,8 @@ In 0.x development, breaking changes may occur in minor releases and will be exp
 
 ## [Unreleased]
 
+- Forge requires upstream Pi; forks such as oh-my-pi that do not provide `systemPromptOptions` / `context_with_system` are unsupported. Forge now detects missing prompt inputs and warns instead of crashing (#2). Preset activation and prompt compilation are disabled on unsupported hosts; tool restrictions remain enforced.
+
 ## [0.5.8] - 2026-10-03
 
 - Keep README images and demonstration media in the repository, not the npm package. Link the accepted EN/ZH demos to immutable GitHub URLs; retain text documentation, examples, compiled code, types and source maps. Restrict package file patterns, reject media/asset entries and tarballs above 2 MiB during package checks, and run those checks automatically in prepack.

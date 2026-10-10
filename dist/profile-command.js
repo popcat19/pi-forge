@@ -121,6 +121,11 @@ async function useProfile(pi, state, compileCycle, deps, id, ctx) {
         ctx.ui.notify("Usage: /profile use <id>", "warning");
         return;
     }
+    const hostError = deps.activationError?.(ctx);
+    if (hostError) {
+        ctx.ui.notify(hostError, "error");
+        return;
+    }
     if (!ctx.isProjectTrusted()) {
         ctx.ui.notify("pi-forge: project is not trusted; refusing to apply an agent profile.", "warning");
         return;

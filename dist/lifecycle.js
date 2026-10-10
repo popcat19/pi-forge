@@ -3,10 +3,12 @@ import { getLatestUserMessage, } from "./compiler.js";
 import { PromptCompilationContext, dedupeDiagnostics } from "./compiler.js";
 import { applyFinalizeRegexRulesToMessage, applyRequestFrequencyRulesToMessages, hasRequestFrequencyRules } from "./regex.js";
 import { promptRuntimeFromPi } from "./prompt-runtime.js";
+import { createHostCompatibility } from "./host-compatibility.js";
 import { formatResourceKey } from "./resource-identity.js";
 import { resetCompileCycle } from "./compile-cycle.js";
 import { getCurrentBranchEntries, getLegacyVariableStateDiagnostic, getRestoredActiveId, getRestoredProfileProvenance } from "./session-adapter.js";
 export function registerLifecycleHandlers(pi, workspace, compileCycle, deps) {
+    const host = deps.hostCompatibility ?? createHostCompatibility();
     let startupToolPolicyPending = false;
     let runFailed = false;
     pi.on("session_shutdown", async () => {
@@ -45,6 +47,7 @@ export function registerLifecycleHandlers(pi, workspace, compileCycle, deps) {
             throw firstError;
     });
     pi.on("session_start", async (event, ctx) => {
+        host.reset();
         runFailed = false;
         deps.setCapabilityAgentBusy?.(false);
         startupToolPolicyPending = true;
@@ -124,6 +127,21 @@ export function registerLifecycleHandlers(pi, workspace, compileCycle, deps) {
     pi.on("before_agent_start", async (event, ctx) => {
         runFailed = false;
         deps.setCapabilityAgentBusy?.(true);
+        if (!event.systemPromptOptions)
+            host.markUnsupported(ctx);
+        if (host.isUnsupported()) {
+            // Do not retain another turn's compiler inputs, abort, or repeat the warning.
+            // Keep the active selection: its executable tool policy remains independent.
+            resetCompileCycle(compileCycle);
+            // Ordinary settlement intentionally preserves cache-preview fields;
+            // unsupported hosts must not advertise that stale prompt as compiled.
+            compileCycle.currentCompilationRuntime = undefined;
+            compileCycle.currentBaseSystemPrompt = undefined;
+            compileCycle.currentCompiledSystemPrompt = undefined;
+            compileCycle.currentCompiledStackKey = undefined;
+            compileCycle.currentPromptInputKey = undefined;
+            return;
+        }
         compileCycle.currentSystemPromptOptions = event.systemPromptOptions;
         deps.refreshWebEditorHost(ctx, event.systemPromptOptions);
         compileCycle.currentLatestUserMessage = event.prompt;
@@ -145,7 +163,7 @@ export function registerLifecycleHandlers(pi, workspace, compileCycle, deps) {
             let messages = event.messages;
             messages = deps.prepareCapabilityMessages?.(messages, ctx) ?? messages;
             const active = workspace.snapshotKnown ? workspace.snapshot().active : undefined;
-            if (active && compileCycle.currentSystemPromptOptions) {
+            if (!host.isUnsupported() && active && compileCycle.currentSystemPromptOptions) {
                 const options = deps.toolPromptOptions?.(compileCycle.currentSystemPromptOptions) ?? compileCycle.currentSystemPromptOptions;
                 const runtime = promptRuntimeFromPi(options, ctx, compileCycle.currentLatestUserMessage, compileCycle.currentCompilationRuntime?.now);
                 const basePrompt = getPiBasePrompt(event.messages, compileCycle.currentBaseSystemPrompt ?? "");
@@ -191,7 +209,7 @@ export function registerLifecycleHandlers(pi, workspace, compileCycle, deps) {
         if (event.message.role === "assistant")
             deps.recordProviderResponseUsage(event.message);
         const active = workspace.snapshotKnown ? workspace.snapshot().active : undefined;
-        if (!active)
+        if (!active || host.isUnsupported())
             return;
         const diagnostics = [];
         const message = applyFinalizeRegexRulesToMessage(active.stack, event.message, diagnostics);

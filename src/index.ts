@@ -17,6 +17,7 @@ import { ForgeWorkspace } from "./workspace.ts";
 import { createToolPolicyRuntime } from "./runtime/tool-policy-runtime.ts";
 import { createWebEditorRuntime } from "./runtime/web-editor-runtime.ts";
 import { createCompileCycleState } from "./compile-cycle.ts";
+import { createHostCompatibility } from "./host-compatibility.ts";
 import { getContextDiffView, getLatestContextDiffUsage } from "./context-diff-history.ts";
 import { createPayloadState } from "./payload-state.ts";
 
@@ -79,6 +80,7 @@ export default function piForge(pi: ExtensionAPI) {
 	// Optional observer: publishes on reload, active-stack/profile changes, and
 	// web-editor mutations without any provider/model/tool-policy side effect.
 	workspace.subscribe(() => activeState.publish());
+	const hostCompatibility = createHostCompatibility();
 	const compileCycle = createCompileCycleState();
 	const payloadState = createPayloadState();
 	const currentActive = () => workspace.snapshotKnown ? workspace.snapshot().active : undefined;
@@ -87,13 +89,16 @@ export default function piForge(pi: ExtensionAPI) {
 	let profileRuntime: ProfileRuntime;
 	const stackRuntime = createPromptStackRuntime(pi, workspace, compileCycle, {
 		syncToolPolicy: instructions.sync,
+		activationError: hostCompatibility.activationError,
 		validatePresetSwitch: instructions.validatePresetSwitch,
 	});
 	profileRuntime = createProfileRuntime(pi, workspace, {
+		activationError: hostCompatibility.activationError,
 		setActive: (id, ctx) => stackRuntime.setActive(id, ctx),
 		updateStatus: stackRuntime.updateStatus,
 	});
 	const webEditorRuntime = createWebEditorRuntime((ctx: ExtensionContext, promptOptions: BuildSystemPromptOptions) => ({
+		activationError: hostCompatibility.activationError,
 		readCapabilities: () => workspace.reloadCapabilities(ctx.cwd, ctx.isProjectTrusted()).capabilities,
 		readCapabilityState: () => instructions.readState(),
 		readCapabilityChoices: () => instructions.readAvailableCapabilities(),
@@ -127,7 +132,7 @@ export default function piForge(pi: ExtensionAPI) {
 		applyProfile: (resolved) => applyResolvedAgentProfile(
 			pi,
 			workspace,
-			{ setActive: (id) => stackRuntime.setActive(id, ctx) },
+			{ setActive: (id) => stackRuntime.setActive(id, ctx), activationError: hostCompatibility.activationError },
 			resolved,
 			ctx,
 		),
@@ -141,9 +146,10 @@ export default function piForge(pi: ExtensionAPI) {
 			return { ok: true, ...webPayloadSnapshot(payloadState) };
 		},
 		getContextDiff: () => ({ ok: true, ...getContextDiffView(payloadState.contextDiffHistory) }),
-	}), () => pi.events);
+	}), () => pi.events, hostCompatibility);
 
 	registerLifecycleHandlers(pi, workspace, compileCycle, {
+		hostCompatibility,
 		reloadStacks: stackRuntime.reloadStacks,
 		disposePromptStackRuntime: stackRuntime.dispose,
 		activateFreshSessionDefaults: profileRuntime.activateFreshSessionDefaults,
@@ -181,6 +187,7 @@ export default function piForge(pi: ExtensionAPI) {
 	const payloadCommand = registerPayloadCommands(pi, payloadState);
 	registerForgeCommand(pi, { openWebEditor: webEditorRuntime.open, stopWebEditor: webEditorRuntime.stop }, payloadCommand);
 	registerPresetCommand(pi, workspace, compileCycle, {
+		hostCompatibility,
 		selectedActiveId: stackRuntime.selectedActiveId,
 		setActive: stackRuntime.setActive,
 		lastActivationError: stackRuntime.lastActivationError,
@@ -190,6 +197,7 @@ export default function piForge(pi: ExtensionAPI) {
 		latestContextDiffUsage: () => getLatestContextDiffUsage(payloadState.contextDiffHistory),
 	});
 	registerProfileCommand(pi, workspace, compileCycle, {
+		activationError: hostCompatibility.activationError,
 		reloadProfiles: profileRuntime.reloadProfiles,
 		resolveProfile: profileRuntime.resolveProfile,
 		setActive: stackRuntime.setActive,

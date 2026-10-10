@@ -22,6 +22,7 @@ export function createProfileRuntime(
 	pi: ExtensionAPI,
 	workspace: ForgeWorkspace,
 	deps: {
+		activationError?(ctx?: ExtensionContext): string | undefined;
 		setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
 		updateStatus(ctx: ExtensionContext): void;
 	},
@@ -43,7 +44,7 @@ export function createProfileRuntime(
 		// D3: auto-activation is an application action. Untrusted projects may
 		// browse global definitions, but they must not apply global profiles or
 		// activate global presets during a fresh session.
-		if (!ctx.isProjectTrusted()) return;
+		if (!ctx.isProjectTrusted() || deps.activationError?.(ctx)) return;
 		const snapshot = workspace.snapshot();
 		const candidates = findAutoActivateAgentProfileCandidates(snapshot.profiles);
 		if (candidates.length === 0) {
@@ -72,7 +73,7 @@ export function createProfileRuntime(
 			return;
 		}
 
-		const result = await applyResolvedAgentProfile(pi, workspace, { setActive: deps.setActive }, resolved, ctx);
+		const result = await applyResolvedAgentProfile(pi, workspace, deps, resolved, ctx);
 		if (!result.ok) {
 			const rollbackSuffix = result.rollbackErrors.length > 0 ? ` Rollback problems: ${result.rollbackErrors.join("; ")}.` : "";
 			const detail = result.detail.endsWith(".") ? result.detail : `${result.detail}.`;

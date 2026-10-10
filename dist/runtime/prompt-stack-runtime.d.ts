@@ -4,6 +4,7 @@ import type { ForgeWorkspace } from "../workspace.ts";
 import type { LoadedPromptStack, PromptStackDiagnostic } from "../types.ts";
 export interface PromptStackRuntimeDeps {
     syncToolPolicy(ctx?: ExtensionContext): void;
+    activationError?(ctx?: ExtensionContext): string | undefined;
     validatePresetSwitch?(target: LoadedPromptStack | undefined, ctx?: ExtensionContext): string | undefined;
 }
 export interface PromptStackRuntime {

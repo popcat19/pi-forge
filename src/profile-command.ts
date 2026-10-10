@@ -31,6 +31,7 @@ import type { ForgeWorkspace } from "./workspace.ts";
 import type { PromptStack } from "./types.ts";
 
 export interface ProfileCommandDeps {
+	activationError?(ctx?: ExtensionContext): string | undefined;
 	reloadProfiles(ctx: ExtensionContext): void | Promise<void>;
 	resolveProfile(target: LoadedAgentProfile, ctx: ExtensionContext): ResolvedAgentProfile;
 	setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
@@ -179,6 +180,11 @@ async function useProfile(
 ): Promise<void> {
 	if (!id) {
 		ctx.ui.notify("Usage: /profile use <id>", "warning");
+		return;
+	}
+	const hostError = deps.activationError?.(ctx);
+	if (hostError) {
+		ctx.ui.notify(hostError, "error");
 		return;
 	}
 	if (!ctx.isProjectTrusted()) {

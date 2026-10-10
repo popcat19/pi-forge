@@ -62,6 +62,7 @@ import type {
 } from "./web-editor/index.ts";
 
 export interface WebHostRuntime {
+	activationError?(): string | undefined;
 	readCapabilities?(): readonly LoadedCapability[];
 	getStacks(): LoadedPromptStack[];
 	getActive(): LoadedPromptStack | undefined;
@@ -446,6 +447,8 @@ async function applyProfileRuntime(
 	runtime: WebHostRuntime,
 	id: string,
 ): Promise<WebEditorOperationResult<WebEditorProfileMutation>> {
+	const hostError = runtime.activationError?.();
+	if (hostError) return { ok: false, status: 409, error: hostError };
 	if (!ctx.isProjectTrusted()) {
 		return { ok: false, status: 403, error: "Project is not trusted; refusing to apply agent profiles." };
 	}

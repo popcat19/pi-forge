@@ -53,6 +53,14 @@ export function createPromptStackRuntime(pi, workspace, compileCycle, deps) {
             return false;
         }
         const target = resolution.target;
+        // Disabling remains available as an explicit recovery action.
+        if (target) {
+            const error = deps.activationError?.(ctx);
+            if (error) {
+                lastActivationError = error;
+                return false;
+            }
+        }
         if (target && ctx && !ctx.isProjectTrusted()) {
             lastActivationError = "Project is not trusted; refusing to activate a preset.";
             return false;
@@ -113,7 +121,7 @@ export function createPromptStackRuntime(pi, workspace, compileCycle, deps) {
     }
     function notifyActivePreset(ctx, detail) {
         const active = workspace.snapshot().active;
-        if (!active)
+        if (!active || deps.activationError?.(ctx))
             return;
         const errorCount = active.diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
         const warningCount = active.diagnostics.filter((diagnostic) => diagnostic.level === "warning").length;

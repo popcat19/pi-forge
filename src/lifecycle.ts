@@ -8,6 +8,7 @@ import {
 import { PromptCompilationContext, dedupeDiagnostics } from "./compiler.ts";
 import { applyFinalizeRegexRulesToMessage, applyRequestFrequencyRulesToMessages, hasRequestFrequencyRules } from "./regex.ts";
 import { promptRuntimeFromPi } from "./prompt-runtime.ts";
+import { createHostCompatibility, type HostCompatibility } from "./host-compatibility.ts";
 import { formatResourceKey } from "./resource-identity.ts";
 import { resetCompileCycle, type CompileCycleState } from "./compile-cycle.ts";
 import { getCurrentBranchEntries, getLegacyVariableStateDiagnostic, getRestoredActiveId, getRestoredProfileProvenance } from "./session-adapter.ts";
@@ -15,6 +16,7 @@ import type { ForgeWorkspace } from "./workspace.ts";
 import type { PromptStackDiagnostic } from "./types.ts";
 
 export interface LifecycleDeps {
+	hostCompatibility?: HostCompatibility;
 	reloadStacks(ctx: ExtensionContext, preferredId?: string, options?: { deferToolPolicy?: boolean; suppressAutoActivate?: boolean }): Promise<void>;
 	disposePromptStackRuntime(): PromptStackDiagnostic[];
 	activateFreshSessionDefaults(ctx: ExtensionContext): Promise<void>;
@@ -48,6 +50,7 @@ export function registerLifecycleHandlers(
 	compileCycle: CompileCycleState,
 	deps: LifecycleDeps,
 ): void {
+	const host = deps.hostCompatibility ?? createHostCompatibility();
 	let startupToolPolicyPending = false;
 	let runFailed = false;
 
@@ -86,6 +89,7 @@ export function registerLifecycleHandlers(
 	});
 
 	pi.on("session_start", async (event, ctx) => {
+		host.reset();
 		runFailed = false;
 		deps.setCapabilityAgentBusy?.(false);
 		startupToolPolicyPending = true;
@@ -167,6 +171,20 @@ export function registerLifecycleHandlers(
 	pi.on("before_agent_start", async (event, ctx) => {
 		runFailed = false;
 		deps.setCapabilityAgentBusy?.(true);
+		if (!event.systemPromptOptions) host.markUnsupported(ctx);
+		if (host.isUnsupported()) {
+			// Do not retain another turn's compiler inputs, abort, or repeat the warning.
+			// Keep the active selection: its executable tool policy remains independent.
+			resetCompileCycle(compileCycle);
+			// Ordinary settlement intentionally preserves cache-preview fields;
+			// unsupported hosts must not advertise that stale prompt as compiled.
+			compileCycle.currentCompilationRuntime = undefined;
+			compileCycle.currentBaseSystemPrompt = undefined;
+			compileCycle.currentCompiledSystemPrompt = undefined;
+			compileCycle.currentCompiledStackKey = undefined;
+			compileCycle.currentPromptInputKey = undefined;
+			return;
+		}
 		compileCycle.currentSystemPromptOptions = event.systemPromptOptions;
 		deps.refreshWebEditorHost(ctx, event.systemPromptOptions);
 		compileCycle.currentLatestUserMessage = event.prompt;
@@ -189,7 +207,7 @@ export function registerLifecycleHandlers(
 			let messages = event.messages;
 			messages = deps.prepareCapabilityMessages?.(messages, ctx) ?? messages;
 			const active = workspace.snapshotKnown ? workspace.snapshot().active : undefined;
-			if (active && compileCycle.currentSystemPromptOptions) {
+			if (!host.isUnsupported() && active && compileCycle.currentSystemPromptOptions) {
 				const options = deps.toolPromptOptions?.(compileCycle.currentSystemPromptOptions) ?? compileCycle.currentSystemPromptOptions;
 				const runtime = promptRuntimeFromPi(options, ctx, compileCycle.currentLatestUserMessage, compileCycle.currentCompilationRuntime?.now);
 				const basePrompt = getPiBasePrompt(event.messages, compileCycle.currentBaseSystemPrompt ?? "");
@@ -232,7 +250,7 @@ export function registerLifecycleHandlers(
 	pi.on("message_end", async (event, ctx) => {
 		if (event.message.role === "assistant") deps.recordProviderResponseUsage(event.message);
 		const active = workspace.snapshotKnown ? workspace.snapshot().active : undefined;
-		if (!active) return;
+		if (!active || host.isUnsupported()) return;
 		const diagnostics: PromptStackDiagnostic[] = [];
 		const message = applyFinalizeRegexRulesToMessage(active.stack, event.message, diagnostics);
 		if (diagnostics.length > 0) deps.recordCompileDiagnostics(ctx, dedupeDiagnostics([compileCycle.latestCompileDiagnostics, diagnostics]));

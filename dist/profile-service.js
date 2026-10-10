@@ -92,6 +92,9 @@ export function deleteAgentProfile(cwd, loaded) {
     return { ok: true, filePath };
 }
 export async function applyResolvedAgentProfile(pi, state, deps, resolved, ctx) {
+    const hostError = deps.activationError?.(ctx);
+    if (hostError)
+        return { ok: false, detail: hostError, rollbackErrors: [] };
     if (!isResolvedAgentProfileUsable(resolved) || !resolved.model) {
         return { ok: false, detail: "Profile failed preflight; runtime state was not changed", rollbackErrors: [] };
     }

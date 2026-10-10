@@ -339,6 +339,9 @@ function autoActivateConflictError(profiles, profile, scope, excludeId) {
         : undefined;
 }
 async function applyProfileRuntime(ctx, runtime, id) {
+    const hostError = runtime.activationError?.();
+    if (hostError)
+        return { ok: false, status: 409, error: hostError };
     if (!ctx.isProjectTrusted()) {
         return { ok: false, status: 403, error: "Project is not trusted; refusing to apply agent profiles." };
     }

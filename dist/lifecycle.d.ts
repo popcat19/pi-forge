@@ -1,10 +1,12 @@
 import type { BuildSystemPromptOptions, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { AssistantMessage } from "@earendil-works/pi-ai";
+import { type HostCompatibility } from "./host-compatibility.ts";
 import { type CompileCycleState } from "./compile-cycle.ts";
 import type { ForgeWorkspace } from "./workspace.ts";
 import type { PromptStackDiagnostic } from "./types.ts";
 export interface LifecycleDeps {
+    hostCompatibility?: HostCompatibility;
     reloadStacks(ctx: ExtensionContext, preferredId?: string, options?: {
         deferToolPolicy?: boolean;
         suppressAutoActivate?: boolean;
