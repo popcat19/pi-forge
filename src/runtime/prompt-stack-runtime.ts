@@ -1,3 +1,4 @@
+import { formatStatusText } from "../status-text.ts";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { createResourceCatalog } from "../catalog.ts";
 import { isDisabledPromptStackId } from "../loader.ts";
@@ -157,7 +158,7 @@ export function createPromptStackRuntime(
 	function updateStatus(ctx: ExtensionContext): void {
 		const active = workspace.snapshot().active;
 		if (active) {
-			ctx.ui.setStatus("pi-forge", ctx.ui.theme.fg("accent", `stack:${active.stack.id}`));
+			ctx.ui.setStatus("pi-forge", formatStatusText(ctx, "accent", `stack:${active.stack.id}`));
 		} else {
 			ctx.ui.setStatus("pi-forge", undefined);
 			compileCycle.latestCompileDiagnostics = [];
@@ -179,7 +180,7 @@ export function createPromptStackRuntime(
 		const errors = diagnostics.filter((diagnostic) => diagnostic.level === "error").length;
 		const warnings = diagnostics.filter((diagnostic) => diagnostic.level === "warning").length;
 		if (errors || warnings) {
-			ctx.ui.setStatus("pi-forge-diagnostics", ctx.ui.theme.fg(errors ? "error" : "warning", `forge:${errors}e/${warnings}w`));
+			ctx.ui.setStatus("pi-forge-diagnostics", formatStatusText(ctx, errors ? "error" : "warning", `forge:${errors}e/${warnings}w`));
 			return;
 		}
 		ctx.ui.setStatus("pi-forge-diagnostics", undefined);

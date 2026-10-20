@@ -8,6 +8,8 @@ In 0.x development, breaking changes may occur in minor releases and will be exp
 
 ## [Unreleased]
 
+- Fall back to plain status text when Theme formatting is unavailable, including the pi-web-ui 0.103+ prototype-getter regression; preset/tool selection still applies (#3).
+
 - Forge requires upstream Pi; forks such as oh-my-pi that do not provide `systemPromptOptions` / `context_with_system` are unsupported. Forge now detects missing prompt inputs and warns instead of crashing (#2). Preset activation and prompt compilation are disabled on unsupported hosts; tool restrictions remain enforced.
 
 ## [0.5.8] - 2026-10-03
