@@ -33,6 +33,14 @@ function packInto(cwd, into) {
 }
 
 function assertInstalledVersions(consumerDir, expectedPiVersion, expectedTypeboxVersion) {
+	// Report upstream caret resolutions separately from the four asserted SDKs.
+	// Normal consumers deliberately do not receive the coherent CI fixture pins.
+	const resolved = {};
+	for (const pkg of [...PI_PACKAGES, "@earendil-works/pi-codemode", "@earendil-works/pi-mcp", "@earendil-works/pi-telemetry", "@earendil-works/chord"]) {
+		const file = join(consumerDir, "node_modules", ...pkg.split("/"), "package.json");
+		if (existsSync(file)) resolved[pkg] = JSON.parse(readFileSync(file, "utf8")).version;
+	}
+	console.log(`Resolved packed consumer host packages: ${JSON.stringify(resolved)}`);
 	for (const pkg of PI_PACKAGES) {
 		const pkgJsonPath = join(consumerDir, "node_modules", ...pkg.split("/"), "package.json");
 		if (!existsSync(pkgJsonPath)) {
