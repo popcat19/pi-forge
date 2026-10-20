@@ -57,16 +57,16 @@ Set `CHROME_PATH` when Chrome/Chromium is outside a standard location. CI runs t
 
 Pi-forge treats Pi-owned SDK packages (`pi-agent-core`, `pi-ai`, `pi-coding-agent`, `pi-tui`, and `typebox`) as host-provided optional peers, not private runtime dependencies. Published Forge 0.5.7 declared peer range `>=0.87.0 <0.88.0`. The Forge 0.5.9 candidate expands supported peers to the union:
 ```
->=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.3.0
+>=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.4.0
 ```
-The repository dev SDK fixtures are updated to `1.2.0` with `typebox@1.3.27`. The minimum supported version remains `0.87.0`; there is no claim of dual 0.86 runtime support. The running host supplies one coherent SDK instance, avoiding duplicate packages and exact-version locks while expressing the actual API requirement. See the [Pi 1.0 compatibility guide](../guides/pi-1-compatibility.md).
+The repository dev SDK fixtures are updated to `1.3.0` with `typebox@1.3.27`. The minimum supported version remains `0.87.0`; there is no claim of dual 0.86 runtime support. The running host supplies one coherent SDK instance, avoiding duplicate packages and exact-version locks while expressing the actual API requirement. See the [Pi 1.0 compatibility guide](../guides/pi-1-compatibility.md).
 
 The repository keeps exact SDK versions as development/test fixtures for reproducibility. Exact fixtures do not constrain which Pi version may load the published extension.
 
 Release validation and smoke testing verify:
 
 - the documented minimum supported Pi version (`0.87.0`);
-- the current Pi version at release time (`1.2.0`), with earlier releases (`1.0.0`, `1.0.1`, `1.0.2`, `1.0.4`, `1.1.0`) as compatibility lanes;
+- the current Pi version at release time (`1.3.0`), with earlier releases (`1.0.0`, `1.0.1`, `1.0.2`, `1.0.4`, `1.1.0`, `1.2.0`) as compatibility lanes;
 - an automated or scheduled probe of npm `latest`.
 
 Run packed installation tests against specific target versions using environment variables:
@@ -75,11 +75,11 @@ Run packed installation tests against specific target versions using environment
 # Verify packed install against pinned minimum (0.87.0):
 PI_TEST_VERSION=0.87.0 TYPEBOX_TEST_VERSION=1.3.7 npm run check:packed
 
-# Verify packed install against current Pi 1.2.0:
-PI_TEST_VERSION=1.2.0 TYPEBOX_TEST_VERSION=1.3.27 npm run check:packed
+# Verify packed install against current Pi 1.3.0:
+PI_TEST_VERSION=1.3.0 TYPEBOX_TEST_VERSION=1.3.27 npm run check:packed
 ```
 
-Ordinary Linux/macOS/Windows CI uses Pi 1.2.0; older supported versions, including minimum 0.87.0 and Pi 1.0.0/1.0.1/1.0.2/1.0.4/1.1.0, are explicit Linux compatibility lanes; passing CI on the exact release commit is a release gate (not claimed as already passed for an unreleased source patch).
+Ordinary Linux/macOS/Windows CI uses Pi 1.3.0; older supported versions, including minimum 0.87.0 and Pi 1.0.0/1.0.1/1.0.2/1.0.4/1.1.0/1.2.0, are explicit Linux compatibility lanes; passing CI on the exact release commit is a release gate (not claimed as already passed for an unreleased source patch).
 
 Document the tested range separately from peer constraints. Pi-coupled experimental subagent capabilities must preflight against the actual host and fail closed with a precise compatibility diagnostic when required APIs are unavailable; ordinary stacks and profiles should remain usable.
 
@@ -95,3 +95,5 @@ See the [public API policy](../reference/public-api.md).
 ### Coherent fixtures versus fresh consumers
 
 Compatibility CI pins the four SDKs and, for 1.x, codemode/MCP/telemetry/chord to the same exact version and asserts resolved versions. These are explicit coherent fixtures, not ordinary fresh consumer resolution. Packed checks deliberately retain normal npm resolution and verify the installed four-SDK family; they must not be silently replaced with the fixture overlay. A fresh Pi 1.1 install was observed to pull codemode 1.2 through upstream carets and fail with a missing `MCP_TYPESCRIPT_PREAMBLE` export independently of Forge. Preserve that failure as release-gate evidence; coherent fixture success alone does not clear the normal-consumer gate.
+
+Pi 1.3 pins its internal Pi dependencies exactly; normal 1.3 consumers resolve the four SDKs plus codemode/MCP/telemetry to 1.3.0 without a fixture overlay. Real-SDK regressions cover default/modifier transcript tool restoration, resumed Preset initial/allow/deny policy, Capability additions, and disabling a Preset back to the policy owner's saved startup baseline (with distinguishable external changes reconciled). This does not change tool authorization or enable every default-active extension tool on resume.

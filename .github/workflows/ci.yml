@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Ordinary jobs cover pinned dev 1.2.0.
+          # Ordinary jobs cover pinned dev 1.3.0.
           # Compatibility matrix explicitly covers supported historic host versions.
           - pi-version: "0.87.0"
             typebox-version: "1.3.7"
@@ -67,6 +67,8 @@ jobs:
             typebox-version: "1.3.27"
           - pi-version: "1.1.0"
             typebox-version: "1.3.27"
+          - pi-version: "1.2.0"
+            typebox-version: "1.3.27"
     env:
       CHROME_PATH: /usr/bin/google-chrome
     steps:
@@ -79,6 +81,8 @@ jobs:
       - name: Install tested Pi host family
         # Explicit coherent fixtures, not unconstrained fresh consumers. Upstream
         # 1.x carets can otherwise mix codemode/MCP APIs across minor releases.
+        # chord has published exact versions for every listed 1.x fixture,
+        # including 1.2.0 (even though the 1.2 SDK no longer depends on it).
         run: |
           EXTRA_PINS=""
           case "${{ matrix.pi-version }}" in

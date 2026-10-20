@@ -8,6 +8,8 @@ In 0.x development, breaking changes may occur in minor releases and will be exp
 
 ## [Unreleased]
 
+- Support Pi 1.1/1.2/1.3 with four SDK peers through `<1.4.0` and exact 1.3.0 development pins; distinguish custom `before_agent_start` wakes from authoritative ordinary prompts, freezing current-branch latest-user context through tool followups. Retain historical host lanes and regress Pi 1.3 transcript tool restoration with Preset/Capability policy.
+
 - Fall back to plain status text when Theme formatting is unavailable, including the pi-web-ui 0.103+ prototype-getter regression; preset/tool selection still applies (#3).
 
 - Handle missing required prompt inputs without an unhandled failure (#2): warn once per session, clear stale compile inputs, decline new preset/profile application, and skip preset compilation/preview after detection. CLI activation preflights command prompt APIs before changing selection/model; already-open Web previews return an unsupported-host error. Early auto-profile settings and preset/tool selection remain unchanged and may apply before first-turn prompt compatibility is observed. Detection neither rolls back these settings nor aborts provider dispatch; Forge continues applying its tool policy independently, and explicit preset disable remains available. A new session resets detection; tree navigation/compaction do not. Upstream Pi is required: oh-my-pi remains unsupported, and valid options or hook registration cannot prove `context_with_system` availability.
