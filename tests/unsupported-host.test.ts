@@ -91,8 +91,9 @@ test("early auto-profile settings and policy remain applied after first-turn uns
 	assert.equal(f.harness.getCurrentModel().id, "target");
 	assert.equal(f.harness.getThinkingLevel(), "high");
 	assert.deepEqual(f.harness.getActiveTools(), ["read"]);
-	assert.ok(f.context.notifications.some(n => /auto-activated profile.*before first-turn prompt compatibility is observed/.test(n.message)));
-	assert.ok(f.context.notifications.some(n => /selection\/tool policy may apply before first-turn prompt compatibility is observed/.test(n.message)));
+	// Supported-host notices stay terse; the not-rolled-back boundary is stated once detection happens.
+	assert.ok(f.context.notifications.some(n => /auto-activated profile/.test(n.message)));
+	assert.ok(!f.context.notifications.some(n => /prompt compatibility/.test(n.message)));
 	const before = structuredClone(f.harness.appended);
 	await f.missingTurn();
 	await f.harness.events.input({}, f.lifecycleCtx);
