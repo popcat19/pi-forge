@@ -16,11 +16,11 @@ The optional package is tested against the released Forge host before its own pu
 4. Test a packed main-package installation against both the documented minimum (0.87.0) and current tested Pi versions (1.3.0) using `PI_TEST_VERSION` / `TYPEBOX_TEST_VERSION`; exercise ordinary Preset/Profile/Capability behavior independently of optional delegation.
 5. Inspect `npm pack --dry-run` for package size and unexpected or missing files. Publish the verified artifact, not an unreviewed working tree.
 
-The macOS and Windows jobs run the same complete verification surface as Linux, including the real-browser editor suite. Compatibility-version (older supported releases) and scheduled latest-Pi probes remain Linux-only; they test dependency drift rather than operating-system behavior. Exact-release CI is a mandatory pre-release gate; this patch documentation does not claim cross-platform release CI has already passed.
+The macOS and Windows jobs run the same complete verification surface as Linux, including the real-browser editor suite. Compatibility-version (older supported releases) and scheduled latest-Pi probes remain Linux-only; they test dependency drift rather than operating-system behavior. Exact-release CI is a mandatory pre-release gate; this documentation does not record cross-platform release CI results.
 
 ## Dependency policy
 
-The four Pi SDK packages remain host-provided optional peers, never private runtime dependencies. Published Forge 0.5.7 required Pi `>=0.87.0 <0.88.0`. The Forge 0.5.9 candidate expands supported peers to the union:
+The four Pi SDK packages remain host-provided optional peers, never private runtime dependencies. Published Forge 0.5.7 required Pi `>=0.87.0 <0.88.0`. Forge 0.5.9 expands supported peers to the union:
 ```
 >=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.4.0
 ```

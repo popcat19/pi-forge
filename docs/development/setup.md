@@ -55,7 +55,7 @@ Set `CHROME_PATH` when Chrome/Chromium is outside a standard location. CI runs t
 
 ## Pi compatibility
 
-Pi-forge treats Pi-owned SDK packages (`pi-agent-core`, `pi-ai`, `pi-coding-agent`, `pi-tui`, and `typebox`) as host-provided optional peers, not private runtime dependencies. Published Forge 0.5.7 declared peer range `>=0.87.0 <0.88.0`. The Forge 0.5.9 candidate expands supported peers to the union:
+Pi-forge treats Pi-owned SDK packages (`pi-agent-core`, `pi-ai`, `pi-coding-agent`, `pi-tui`, and `typebox`) as host-provided optional peers, not private runtime dependencies. Published Forge 0.5.7 declared peer range `>=0.87.0 <0.88.0`. Forge 0.5.9 expands supported peers to the union:
 ```
 >=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.4.0
 ```
@@ -79,7 +79,7 @@ PI_TEST_VERSION=0.87.0 TYPEBOX_TEST_VERSION=1.3.7 npm run check:packed
 PI_TEST_VERSION=1.3.0 TYPEBOX_TEST_VERSION=1.3.27 npm run check:packed
 ```
 
-Ordinary Linux/macOS/Windows CI uses Pi 1.3.0; older supported versions, including minimum 0.87.0 and Pi 1.0.0/1.0.1/1.0.2/1.0.4/1.1.0/1.2.0, are explicit Linux compatibility lanes; passing CI on the exact release commit is a release gate (not claimed as already passed for an unreleased source patch).
+Ordinary Linux/macOS/Windows CI uses Pi 1.3.0; older supported versions, including minimum 0.87.0 and Pi 1.0.0/1.0.1/1.0.2/1.0.4/1.1.0/1.2.0, are explicit Linux compatibility lanes; passing CI on the exact release commit is a release gate (its result is not recorded in this document).
 
 Document the tested range separately from peer constraints. Pi-coupled experimental subagent capabilities must preflight against the actual host and fail closed with a precise compatibility diagnostic when required APIs are unavailable; ordinary stacks and profiles should remain usable.
 

@@ -2,25 +2,27 @@
 
 [Documentation](../README.md) · [简体中文](../zh-CN/guides/pi-1-compatibility.md)
 
-## Forge 0.5.9 candidate: Pi 1.1 / 1.2 / 1.3
+## Forge 0.5.9: Pi 1.1 / 1.2 / 1.3
 
-The candidate pins development SDKs to **1.3.0** and expands the four optional SDK peers to:
+Forge 0.5.9 pins development SDKs to **1.3.0** and expands the four optional SDK peers to:
 
 ```text
 >=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.4.0
 ```
 
-Release gates remain pending; this is not an implicit promise for 1.4 or other 0.x hosts. Historical 0.87/0.99/1.0 CI lanes remain, including 1.0.2, with 1.0.4, 1.1.0 and 1.2.0 explicit; ordinary jobs use 1.3.0. Compatibility jobs assert the resolved family and explicitly pin 1.x codemode/MCP/telemetry/chord as coherent fixtures. Normal packed consumers do **not** receive that overlay: a fresh 1.1 install can pull codemode 1.2 via upstream carets and fail independently of Forge. Fixture success does not replace the normal-consumer release gate.
+This is not an implicit promise for Pi 1.4 or other 0.x hosts. Historical 0.87/0.99/1.0 CI lanes remain, including 1.0.2, with 1.0.4, 1.1.0 and 1.2.0 explicit; ordinary jobs use 1.3.0. Compatibility jobs assert the resolved family and explicitly pin 1.x codemode/MCP/telemetry/chord as coherent fixtures. Normal packed consumers do **not** receive that overlay: a fresh 1.1 install can pull codemode 1.2 via upstream carets and fail independently of Forge. Fixture success does not replace the normal-consumer check.
 
 Pi 1.2 emits `before_agent_start` for idle custom wakes (including Subagents completion notifications), with no `prompt`; startup is already busy (`isIdle() === false`). Forge resolves `runtime.lastUserMessage` once from the current branch's compaction-aware preview projection before compiling System blocks, using the existing latest non-empty user-content helper. No eligible content yields empty; custom content is not a user prompt. Existing preview rendering is retained (including `[image]` for image content). This is role-based history, not authenticated human identity. The snapshot survives tool followups until settlement. Each actual start, including custom starts, resets turn-frequency rewriting; busy steering does not invent a start or user message.
 
 Ordinary and legacy user events retain their authoritative expanded prompt, even empty/image-only. Older hosts that do not emit the custom-start event are not retrofitted with it. The tests characterize that host distinction rather than claiming 1.2 custom-start behavior on 1.1.
 
+**Known limitation on Pi 1.1 and earlier:** these hosts start idle custom wakes (for example a Subagents completion notification that wakes the parent) without any `before_agent_start`, so Forge never sees that run start. The wake request and its tool followups are sent without the Preset's System blocks; tool policy still applies. This is unchanged from 0.5.8 and was verified on Pi 1.1.0. Ordinary user turns and busy steering are not affected. If you rely on background completion wakes, use Pi 1.2 or later.
+
 Pi 1.3 keeps the custom-start/System contract. It additionally restores the transcript's active tool loadout on default/modifier-based session creation; explicit tool selections still override restoration. Forge recomputes the effective selection using its Preset (`tools.initial`, allow/deny) and active Capabilities, rather than trusting stale restored tools. Disabling a Preset restores the tool-policy owner's saved pre-policy startup baseline, reconciling distinguishable external changes; a reduced transcript loadout must not erase that saved baseline. No new enabled-membership execution restriction is introduced. Real-SDK persisted-session regressions cover these paths with offline faux streams.
 
 Pi 1.3's internal SDK/codemode/MCP/telemetry dependencies are exact pins. Normal 1.3 consumers therefore resolve the seven Pi packages to 1.3.0 without the historical fixture overlay; this does not retroactively fix older releases' caret-resolution drift.
 
-The following 0.5.8 section records the previous release policy; it is not the candidate's peer range.
+The 0.5.8 section below records the previous release's policy (peers through `<1.1.0`); it is kept as history and is not the current peer range.
 
 ## Forge 0.5.8 versus older packages
 
@@ -94,9 +96,9 @@ Published subagents 0.5.3 does not support `tools.initial`. Its pending feature 
 ```bash
 # Override both when testing a different host than the installed development SDK.
 PI_TEST_VERSION=0.87.0 TYPEBOX_TEST_VERSION=1.3.7 npm run check:packed
-PI_TEST_VERSION=1.0.2 TYPEBOX_TEST_VERSION=1.3.27 npm run check:packed
+PI_TEST_VERSION=1.3.0 TYPEBOX_TEST_VERSION=1.3.27 npm run check:packed
 ```
 
 Without overrides, packed checks use the coherent installed SDK family and its declared TypeBox version, not a hardcoded historical pin. Both consumers use normal npm peer resolution and check the installed versions. An optional sibling, when present, uses its declared runtime dependency; this is not a test of an unreleased local runtime.
 
-Ordinary Linux/macOS/Windows CI uses pinned Pi 1.0.2; explicit compatibility lanes (0.87.0 through 1.0.1) and scheduled latest-Pi probes run on Linux. Exact-release CI remains a release gate, not a claim that this source patch has already passed remote or real-provider testing.
+Ordinary Linux/macOS/Windows CI uses pinned Pi 1.3.0; explicit compatibility lanes (0.87.0 through 1.2.0, including 1.0.2) and scheduled latest-Pi probes run on Linux. CI on the exact release commit remains a release gate; this document does not record its result or any real-provider testing.

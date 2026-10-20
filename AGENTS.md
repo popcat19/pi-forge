@@ -2,7 +2,11 @@
 
 These instructions apply to humans and coding agents.
 
-## Authorized 0.5.8 local release preparation
+## Authorized 0.5.9 release
+
+The user approved releasing 0.5.9 on 2026-10-20: Pi 1.1/1.2/1.3 support, the #3 presentation-only status Theme fallback, and #2 unsupported-host handling (oh-my-pi remains unsupported). The release commit changes only the version, changelog and current documentation. Pushing and npm publication are separate steps, each performed under the user's one-time approval for that step; this approval does not authorize tags, GitHub comments/closures, global installation, personal resource migration, host reload or optional-package publication. CI on the exact release commit remains a release gate and must pass before publication; local verification does not imply it. Current source peers: `>=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.4.0`; development Pi four-package family 1.3.0 and typebox 1.3.27. Preserve the untracked image1.png/image2.png and the optional/runtime worktrees.
+
+## Historical: authorized 0.5.8 local release preparation
 
 The user authorized the main-package compatibility patch on 2026-10-02, explicitly deferring authorization semantics to a separate discussion, and subsequently authorized preparing 0.5.8 for review. Align the main manifest/lock, dated changelog and current documentation, then verify the exact candidate and provide a change list. The user will perform npm publication after review. No remote push, publish, tag, global installation, personal resource migration or host reload is authorized in this preparation step; earlier release authorizations below are historical, not permissions for this release. Preserve the optional/runtime worktrees and their pre-existing dirty changes, and the untracked image1.png/image2.png. Exact-release-commit remote CI remains a release gate, not a result implied by local tests.
 

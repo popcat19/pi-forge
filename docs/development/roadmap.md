@@ -4,11 +4,15 @@
 
 This file contains forward-looking product work only. Completed capability belongs in the [feature inventory](../reference/features.md), release history in the root [changelog](../../CHANGELOG.md), and completed investigation in the [design archive](../design/README.md).
 
-## Active 0.5.8: Pi host compatibility release preparation
+## 0.5.9: Pi 1.1–1.3 compatibility and unsupported-host handling (release prepared)
 
-Forge 0.5.8 aligns host peers, development pins, packed consumers and CI with Pi 1.0.x (tested 1.0.0–1.0.2) while preserving the Pi 0.87.x baseline and explicit 0.99.0–0.99.2 support. The only production source change adds Pi documentation pointers; tool-policy, Capability, model-API and usage semantics remain unchanged. See [compatibility and migration](../guides/pi-1-compatibility.md).
+Forge 0.5.9 extends host peers to Pi 1.0–1.3 (`>=1.0.0 <1.4.0`, development pin 1.3.0), resolves Pi 1.2 custom-start `lastUserMessage` from frozen current-branch user history, keeps Forge status formatting presentation-only when the Theme is unavailable (#3), and handles hosts lacking required prompt inputs without an unhandled failure (#2). oh-my-pi remains unsupported. Tool-policy, Capability, model-API and usage semantics are unchanged. See [compatibility and migration](../guides/pi-1-compatibility.md).
 
-Local release preparation is authorized; the user will review the change list and publish. The final release commit still requires all [release gates](release.md), including exact-commit remote CI. Optional/runtime features and any future exposure-policy redesign remain independent. Publishing does not authorize an installed-host upgrade or reload.
+The release commit is prepared locally. Pushing, exact-commit remote CI (a [release gate](release.md); not yet recorded for this commit), npm publication, registry/clean-consumer verification and any issue replies are separate steps. Optional/runtime features and any future exposure-policy redesign remain independent. Publishing does not authorize an installed-host upgrade or reload.
+
+## 0.5.8 Pi host compatibility (completed)
+
+0.5.8 aligned host peers, development pins, packed consumers and CI with Pi 1.0.x (tested 1.0.0–1.0.2) while preserving the Pi 0.87.x baseline and explicit 0.99.0–0.99.2 support. See the [changelog](../../CHANGELOG.md).
 
 ## 0.5.7 Preview and scrolling (completed)
 

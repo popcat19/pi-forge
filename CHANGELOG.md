@@ -8,11 +8,16 @@ In 0.x development, breaking changes may occur in minor releases and will be exp
 
 ## [Unreleased]
 
-- Support Pi 1.1/1.2/1.3 with four SDK peers through `<1.4.0` and exact 1.3.0 development pins; distinguish custom `before_agent_start` wakes from authoritative ordinary prompts, freezing current-branch latest-user context through tool followups. Retain historical host lanes and regress Pi 1.3 transcript tool restoration with Preset/Capability policy.
+## [0.5.9] - 2026-10-20
 
+- Support Pi 1.1, 1.2 and 1.3: peers become `>=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.4.0` and development SDKs pin 1.3.0 (`typebox@1.3.27`). Historical host lanes remain, with 1.0.4, 1.1.0 and 1.2.0 added; Pi 1.4+ and other 0.x versions are not implied.
+- Handle Pi 1.2 custom `before_agent_start` wakes (no `prompt`): `runtime.lastUserMessage` comes once from the current branch's latest non-empty user history, frozen through tool followups until settlement. Ordinary and legacy user events keep their authoritative prompt.
+- Document a known limitation on Pi 1.1 and earlier: idle custom wakes start without `before_agent_start`, so those requests carry no Preset System blocks (unchanged from 0.5.8; use Pi 1.2+ for background completion wakes).
+- Add Pi 1.3 regressions for transcript tool restoration with Preset and Capability policy; packed consumers report the resolved SDK and upstream packages and keep normal npm peer resolution.
 - Fall back to plain status text when Theme formatting is unavailable, including the pi-web-ui 0.103+ prototype-getter regression; preset/tool selection still applies (#3).
-
-- Handle missing required prompt inputs without an unhandled failure (#2): warn once per session, clear stale compile inputs, decline new preset/profile application, and skip preset compilation/preview after detection. CLI activation preflights command prompt APIs before changing selection/model; already-open Web previews return an unsupported-host error. Early auto-profile settings and preset/tool selection remain unchanged and may apply before first-turn prompt compatibility is observed. Detection neither rolls back these settings nor aborts provider dispatch; Forge continues applying its tool policy independently, and explicit preset disable remains available. A new session resets detection; tree navigation/compaction do not. Upstream Pi is required: oh-my-pi remains unsupported, and valid options or hook registration cannot prove `context_with_system` availability.
+- Handle missing required prompt inputs without an unhandled failure (#2): warn once per session, clear stale compile inputs, decline new preset/profile application, and skip preset compilation/preview. CLI activation preflights command prompt APIs before changing selection/model; already-open Web previews return an unsupported-host error.
+- Early auto-profile settings and preset/tool selection may apply before first-turn prompt compatibility is observed. Detection neither rolls back them nor aborts provider dispatch; Forge keeps applying its tool policy and explicit preset disable remains available. A new session resets detection; tree navigation/compaction do not.
+- Upstream Pi is required: oh-my-pi remains unsupported, and valid options or hook registration cannot prove `context_with_system` availability.
 
 ## [0.5.8] - 2026-10-03
 
