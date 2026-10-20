@@ -45,6 +45,8 @@ After a successful application, later manual changes are respected. The profile 
 
 At most one profile may set `autoActivate: true`. It applies once when Pi starts a fresh session and takes precedence over standalone prompt-stack autoload, including when `promptStack` is `null`.
 
+Auto-profile settings and preset/tool selection may apply before first-turn prompt compatibility is observed. Later detection of missing required prompt inputs does not roll back those settings, abort provider dispatch, or automatically clear independently applied tool policy. CLI application preflights command prompt APIs; this is not universal startup detection or support for forks such as OMP. See [unsupported-host boundaries](../guides/pi-1-compatibility.md#unsupported-host-boundaries).
+
 Restored branch selections take precedence over auto-activation. Invalid or ambiguous profile auto-activation fails closed: pi-forge will not partially apply it or silently fall back to a stack.
 
 ## Provenance and drift

@@ -41,6 +41,8 @@ Agent profile 是项目级或用户全局、带 schema version 的预设，只�
 
 最多一个 profile 可以设置 `autoActivate: true`。它只在全新 session 中应用一次，并优先于独立 stack autoload；恢复的 branch 状态优先。无效或冲突的自动启用会 fail closed。
 
+自动 Profile 的设置及预设/工具选择可能在首轮提示词兼容性被观察之前生效。之后检测到缺少必要输入时，不会回滚这些设置、中止 provider 请求派发，或自动清除独立生效的工具策略。CLI 应用前会检查命令专用提示词 API；这不是通用启动检测，也不代表支持 OMP 等分支。详见[不受支持宿主的边界](../guides/pi-1-compatibility.md#不受支持宿主的边界)。
+
 `/profile status` 会把 profile 源定义变化和当前模型/思考等级/stack drift 分开显示。Provenance 只用于 branch 状态报告；reload、resume、tree navigation 和 compaction 不会重新应用 profile。
 
 普通 profile 默认不能委派。Delegation 授权由可选包 `@zihanw/pi-forge-subagents` 通过专用文件持有，使用 `project:<id>` 或 `global:<id>` 完整 key，并可按 profile 覆盖 backend/timeout。裸授权 key 无论位于哪个文件都只是项目 profile 的兼容别名；同 ID 的全局和项目 profile 永不互相继承授权。主包不读取任何 subagent 配置，删除 profile 也不会改动 `subagents.json`。启用前见[前台 delegation](../guides/delegation.md)。

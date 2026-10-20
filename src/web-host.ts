@@ -208,6 +208,8 @@ export function createWebEditorHost(ctx: ExtensionContext, runtime: WebHostRunti
 		deleteStack: (id) => deleteStackFile(ctx, runtime, id),
 		validateStack: (stack) => validatePromptStack(stack),
 		previewStack: (id, stack) => {
+			const hostError = runtime.activationError?.();
+			if (hostError) return { ok: false, status: 409, error: hostError };
 			const target = resolveStack(runtime, id);
 			if (!target) return { ok: false, status: 404, error: `Unknown preset: ${id}` };
 			const diagnostics = validatePromptStack(stack);
@@ -219,6 +221,8 @@ export function createWebEditorHost(ctx: ExtensionContext, runtime: WebHostRunti
 		clearPayload: () => runtime.clearPayload(),
 		getContextDiff: () => runtime.getContextDiff(),
 		activateStack: (selector) => {
+			const hostError = runtime.activationError?.();
+			if (hostError) return { ok: false, status: 409, error: hostError };
 			if (!runtime.setActive(selector)) {
 				const error = runtime.lastActivationError?.() ?? `Unknown preset: ${selector}`;
 				const status = !ctx.isProjectTrusted() ? 403 : resolveStack(runtime, selector) ? 409 : 404;

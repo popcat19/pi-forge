@@ -30,6 +30,16 @@ Forge 0.5.8 为四个 Pi SDK 包声明的 peer 策略为：
 
 本补丁只调整依赖、测试覆盖与文档，**不改变**工具授权、Capability 所有权、用量汇总或个人配置。
 
+## 不受支持宿主的边界
+
+Forge 需要上游 Pi 的 `systemPromptOptions` 与 `context_with_system` 契约。oh-my-pi（OMP）等分支仍不受支持；优雅处理缺失输入不等于支持 OMP，也不认证分支的工具权限实现。
+
+- CLI 应用预设/Profile 会在改变选择或模型前检查命令专用的提示词 API；普通生命周期 context 无需提供命令专用 getter。
+- 全新会话的自动 Profile 模型/思考设置及预设/工具选择仍然提前生效，可能早于首轮提示词兼容性被观察到。不会延后应用，也不会在随后检测到缺失输入时自动回滚。
+- 缺少必要输入时每个会话只警告一次，清除过时的编译捕获，并在该会话内锁定拒绝新的预设/Profile 应用及预设编译/预览，包括已打开 Web 编辑器的 Preview。检测**不会**中止 provider 请求派发，也不会自动清除独立生效的工具策略；Forge 仍继续应用并检查其策略。
+- `/preset use none`（或 `off`）可显式禁用预设。新会话会重置锁定状态与警告次数；tree navigation、compaction 和 agent settlement 不会重置。重试前应先修复宿主契约，再新建会话。
+- 检测不覆盖所有宿主，也不保证在启动时完成。有效的选项与成功的 `pi.on()` 注册不能证明 `context_with_system` 真会被调用；Forge 不以注册成功推断 hook 支持。
+
 ## Native MCP：逐项确认精确名称迁移
 
 Pi 0.99.2+ 规范化 native MCP 名称，例如 `mcp__demo-server__ping` 改为 `mcp__demo_server__ping`。同一服务器内 `a-b` 与 `a_b` 等工具名冲突会添加 hash 后缀；服务器名规范化冲突会被拒绝。
