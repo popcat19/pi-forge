@@ -16,6 +16,16 @@ Minimum Pi remains 0.87.0. Development pins are Pi 1.0.2 and `typebox@1.3.27`. T
 
 This patch changes dependency/test coverage and documentation, **not** tool authorization, Capability ownership, usage aggregation, or personal configuration.
 
+## Unsupported-host boundaries
+
+Forge requires upstream Pi's `systemPromptOptions` and `context_with_system` contract. Forks such as oh-my-pi (OMP) remain unsupported; graceful missing-input handling is not OMP support or certification of a fork's tool permissions.
+
+- CLI preset/profile application checks command-only prompt APIs before changing selection or model. Ordinary lifecycle contexts need no command-only getter.
+- Fresh-session auto-profile model/thinking settings and preset/tool selection still apply early, potentially before first-turn prompt compatibility is observed. They are not deferred or automatically rolled back on later unsupported-input detection.
+- Missing required inputs trigger one warning per session, clear stale compilation captures, and latch off new preset/profile application and preset compilation/preview, including an already-open Web editor's Preview. This detection does **not** abort provider dispatch or automatically clear independently applied tool policy; Forge continues applying/checking its policy.
+- `/preset use none` (or `off`) explicitly disables the preset. A new session resets the latch and warning budget; tree navigation, compaction, and agent settlement do not. Fix the host contract before retrying in a new session.
+- Detection is not universal or guaranteed at startup. Valid options and successful `pi.on()` registration cannot prove that `context_with_system` will actually run; Forge does not infer hook support from registration alone.
+
 ## Native MCP: migrate exact names deliberately
 
 Pi 0.99.2+ normalizes native MCP names, for example `mcp__demo-server__ping` becomes `mcp__demo_server__ping`. Same-server tool collisions such as `a-b` and `a_b` receive hash suffixes; conflicting normalized server names are rejected.

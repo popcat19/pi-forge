@@ -8,7 +8,7 @@ In 0.x development, breaking changes may occur in minor releases and will be exp
 
 ## [Unreleased]
 
-- Forge requires upstream Pi; forks such as oh-my-pi that do not provide `systemPromptOptions` / `context_with_system` are unsupported. Forge now detects missing prompt inputs and warns instead of crashing (#2). Preset activation and prompt compilation are disabled on unsupported hosts; tool restrictions remain enforced.
+- Handle missing required prompt inputs without an unhandled failure (#2): warn once per session, clear stale compile inputs, decline new preset/profile application, and skip preset compilation/preview after detection. CLI activation preflights command prompt APIs before changing selection/model; already-open Web previews return an unsupported-host error. Early auto-profile settings and preset/tool selection remain unchanged and may apply before first-turn prompt compatibility is observed. Detection neither rolls back these settings nor aborts provider dispatch; Forge continues applying its tool policy independently, and explicit preset disable remains available. A new session resets detection; tree navigation/compaction do not. Upstream Pi is required: oh-my-pi remains unsupported, and valid options or hook registration cannot prove `context_with_system` availability.
 
 ## [0.5.8] - 2026-10-03
 
