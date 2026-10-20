@@ -15,6 +15,18 @@ const npmPrefix = npmCli ? [npmCli] : [];
 const { piVersion, typeboxVersion } = resolveTestVersions(rootDir, process.env);
 console.log(`Packed install test: Pi version = ${piVersion}, TypeBox version = ${typeboxVersion}`);
 
+// Opt-in coherent fixture (PI_TEST_COHERENT_UPSTREAM=1, set by CI compatibility lanes).
+// Pi 1.0.1-1.1.x declare caret ranges on their own upstream packages, which now
+// resolve to newer, incompatible releases (e.g. Pi 1.1.0 + pi-codemode 1.3.0 lacks
+// MCP_TYPESCRIPT_PREAMBLE) independently of Forge. Without the flag, consumers keep
+// normal npm resolution; the ordinary 1.3.0 jobs are the unconstrained-consumer gate.
+const UPSTREAM_PACKAGES = ["@earendil-works/pi-codemode", "@earendil-works/pi-mcp", "@earendil-works/pi-telemetry", "@earendil-works/chord"];
+const coherentUpstream = process.env.PI_TEST_COHERENT_UPSTREAM === "1" && piVersion.startsWith("1.");
+const upstreamPins = coherentUpstream ? UPSTREAM_PACKAGES.map((pkg) => `${pkg}@${piVersion}`) : [];
+console.log(`Upstream codemode/MCP/telemetry/chord: ${coherentUpstream
+	? `pinned to ${piVersion} (PI_TEST_COHERENT_UPSTREAM=1 coherent fixture)`
+	: "unconstrained (normal npm resolution)"}`);
+
 function run(command, args, opts = {}) {
 	const result = spawnSync(command, args, { encoding: "utf8", ...opts });
 	if (result.error) throw result.error;
@@ -36,7 +48,7 @@ function assertInstalledVersions(consumerDir, expectedPiVersion, expectedTypebox
 	// Report upstream caret resolutions separately from the four asserted SDKs.
 	// Normal consumers deliberately do not receive the coherent CI fixture pins.
 	const resolved = {};
-	for (const pkg of [...PI_PACKAGES, "@earendil-works/pi-codemode", "@earendil-works/pi-mcp", "@earendil-works/pi-telemetry", "@earendil-works/chord"]) {
+	for (const pkg of [...PI_PACKAGES, ...UPSTREAM_PACKAGES]) {
 		const file = join(consumerDir, "node_modules", ...pkg.split("/"), "package.json");
 		if (existsSync(file)) resolved[pkg] = JSON.parse(readFileSync(file, "utf8")).version;
 	}
@@ -115,7 +127,7 @@ try {
 		writeFileSync(join(mainOnly, "package.json"), JSON.stringify({ name: "smoke-main", private: true, type: "module" }));
 		run(npm, [...npmPrefix, "install", mainPack,
 			...PI_PACKAGES.map((pkg) => `${pkg}@${piVersion}`),
-			`typebox@${typeboxVersion}`,
+			`typebox@${typeboxVersion}`, ...upstreamPins,
 			"--no-audit", "--no-fund", "--ignore-scripts"], { cwd: mainOnly });
 		assertInstalledVersions(mainOnly, piVersion, typeboxVersion);
 		writeFileSync(join(mainOnly, "smoke.mjs"), smokeScript([`const { ForgeHostPortOperation } = await import('@zihanw/pi-forge/subagent');`]));
@@ -143,7 +155,7 @@ try {
 
 			run(npm, [...npmPrefix, "install",
 				...PI_PACKAGES.map((pkg) => `${pkg}@${piVersion}`),
-				`typebox@${typeboxVersion}`,
+				`typebox@${typeboxVersion}`, ...upstreamPins,
 				"--no-audit", "--no-fund", "--ignore-scripts"], { cwd: both });
 
 			assertInstalledVersions(both, piVersion, typeboxVersion);

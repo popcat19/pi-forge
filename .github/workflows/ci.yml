@@ -111,6 +111,9 @@ jobs:
         env:
           PI_TEST_VERSION: ${{ matrix.pi-version }}
           TYPEBOX_TEST_VERSION: ${{ matrix.typebox-version }}
+          # Historical 1.x hosts: pin Pi's own upstream packages in packed consumers too
+          # (their caret ranges now resolve to incompatible newer releases).
+          PI_TEST_COHERENT_UPSTREAM: "1"
         run: npm run verify
 
   latest-pi:

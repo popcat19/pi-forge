@@ -10,7 +10,7 @@ Forge 0.5.9 将开发 SDK 固定为 **1.3.0**，四个可选 SDK peer 范围扩�
 >=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.4.0
 ```
 
-不自动承诺 Pi 1.4 或其他 0.x。历史 CI 保留 1.0.2，并增加 1.0.4 / 1.1.0 / 1.2.0；常规任务使用 1.3.0。兼容任务核对实际解析版本，并明确固定 1.x codemode/MCP/telemetry/chord 为同版本 fixture。普通打包消费者不使用此覆盖：全新 Pi 1.1 安装可能因上游 caret 拉取 codemode 1.2 而独立失败，不能用 fixture 成功掩盖该检查。
+不自动承诺 Pi 1.4 或其他 0.x。历史 CI 保留 1.0.2，并增加 1.0.4 / 1.1.0 / 1.2.0；常规任务使用 1.3.0。兼容任务核对实际解析版本，并明确固定 1.x codemode/MCP/telemetry/chord 为同版本 fixture。这些任务的打包消费者也通过 `PI_TEST_COHERENT_UPSTREAM=1` 使用同样的固定版本；常规打包检查（1.3.0 任务）保持 npm 正常解析。原因是 Pi 1.0.1–1.1.x 的全新无约束安装现在会经上游 caret 拉到更新且不兼容的 codemode/MCP（例如 Pi 1.1.0 + pi-codemode 1.3.0 因缺少 `MCP_TYPESCRIPT_PREAMBLE` 导出而失败），与 Forge 无关。fixture 通过只说明 Forge 在该宿主系列上可用，不代表旧版 Pi 的全新无约束安装可用。
 
 Pi 1.2 的空闲自定义唤醒触发无 `prompt` 的 `before_agent_start`，启动时 `isIdle()` 已为 false。Forge 在编译 System 块之前，通过现有预览投影与历史 helper 一次解析当前分支的 `runtime.lastUserMessage`，直到结算保持工具后续请求的快照。没有符合条件的用户内容则为空；自定义消息不是用户提示。保留 helper 既有渲染（包括图片的 `[image]`）；role=user 不代表经过身份认证的人类。每个实际 start 重置 turn 频率规则；忙碌时 steering 不伪造 start 或用户消息。普通/旧宿主 user 事件仍以展开后的 prompt 为准，包括空文本/仅图片输入。旧宿主不发出 custom-start 时，不伪造该事件。
 
