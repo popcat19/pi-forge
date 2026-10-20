@@ -1,3 +1,4 @@
+import { formatStatusText } from "../status-text.ts";
 import type { BuildSystemPromptOptions, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { showText } from "../preview.ts";
 import { createHostCompatibility, type HostCompatibility } from "../host-compatibility.ts";
@@ -87,7 +88,7 @@ export function createWebEditorRuntime(
 		if (!promptOptions) return;
 		webEditor.updateHost(createHost(ctx, promptOptions));
 		remember(webEditor, ctx.cwd, preferredPort, promptOptions);
-		ctx.ui.setStatus("pi-forge-editor", ctx.ui.theme.fg("accent", `editor:${webEditor.port}`));
+		ctx.ui.setStatus("pi-forge-editor", formatStatusText(ctx, "accent", `editor:${webEditor.port}`));
 	}
 
 	async function open(ctx: ExtensionCommandContext, mode: "open" | "restart" = "open"): Promise<void> {
@@ -133,12 +134,12 @@ export function createWebEditorRuntime(
 				}
 			}
 			remember(webEditor, ctx.cwd, settings.preferredPort, promptOptions);
-			ctx.ui.setStatus("pi-forge-editor", ctx.ui.theme.fg("accent", `editor:${webEditor.port}`));
+			ctx.ui.setStatus("pi-forge-editor", formatStatusText(ctx, "accent", `editor:${webEditor.port}`));
 			ctx.ui.notify(`pi-forge: preset editor running at ${webEditor.url}`, "info");
 		} else {
 			webEditor.updateHost(createHost(ctx, promptOptions));
 			remember(webEditor, ctx.cwd, settings.preferredPort, promptOptions);
-			ctx.ui.setStatus("pi-forge-editor", ctx.ui.theme.fg("accent", `editor:${webEditor.port}`));
+			ctx.ui.setStatus("pi-forge-editor", formatStatusText(ctx, "accent", `editor:${webEditor.port}`));
 			ctx.ui.notify(`pi-forge: preset editor already running at ${webEditor.url}`, "info");
 		}
 

@@ -1,3 +1,4 @@
+import { formatStatusText } from "../status-text.ts";
 import { basename } from "node:path";
 import type { BuildSystemPromptOptions, ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { isValidToolName, type CapabilityToolPatch } from "../codecs/capability.ts";
@@ -99,7 +100,7 @@ export function createToolPolicyRuntime(pi: ExtensionAPI, getActiveStack: () => 
 		lastApplied = [...nextTools];
 		if (ctx) {
 			const label = nextTools.length > 0 ? `tools:${nextTools.length}` : "tools:none";
-			ctx.ui.setStatus("pi-forge-tools", ctx.ui.theme.fg(nextTools.length > 0 ? "accent" : "warning", label));
+			ctx.ui.setStatus("pi-forge-tools", formatStatusText(ctx, nextTools.length > 0 ? "accent" : "warning", label));
 		}
 	}
 
