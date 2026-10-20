@@ -17,6 +17,9 @@ const AI = await import("@earendil-works/pi-ai");
 SDK.initTheme();
 const [major, minor] = resolveHostFamilyVersion(process.cwd()).split(".").map(Number);
 const restoresDefaultTools = major > 1 || (major === 1 && minor >= 3);
+// `+name`/`-name` default-tool modifiers first shipped in Pi 1.1.0; older hosts
+// would treat them as literal tool names, so the modifier cases do not exist there.
+const supportsToolModifiers = major > 1 || (major === 1 && minor >= 1);
 const sorted = (names: string[]) => [...names].sort();
 
 // Do NOT use the agent harness's explicit tools/noTools/setActiveTools setup:
@@ -81,7 +84,7 @@ async function fixture(policy: "allow" | "deny", modifiers: boolean) {
 	} };
 }
 
-for (const policy of ["allow", "deny"] as const) for (const modifiers of [false, true]) for (const capability of [false, true]) {
+for (const policy of ["allow", "deny"] as const) for (const modifiers of supportsToolModifiers ? [false, true] : [false]) for (const capability of [false, true]) {
 	test(`real SDK transcript restore: ${policy}, modifiers=${modifiers}, capability=${capability}`, async () => {
 		const f = await fixture(policy, modifiers);
 		let live: Awaited<ReturnType<typeof f.open>> | undefined;
