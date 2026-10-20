@@ -102,7 +102,7 @@ export function registerLifecycleHandlers(
 			if (freshSession) await deps.activateFreshSessionDefaults(ctx);
 			deps.reloadForgeWorkspace(ctx);
 			deps.refreshWebEditorHost(ctx);
-			deps.notifyActivePreset(ctx, "after session " + event.reason);
+			deps.notifyActivePreset(ctx, "after session " + event.reason + "; selection/tool policy may apply before first-turn prompt compatibility is observed");
 			// Resume and bind only once the restored workspace is complete.
 			deps.bindActiveState(ctx);
 		} catch (error) {

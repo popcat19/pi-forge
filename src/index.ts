@@ -197,6 +197,7 @@ export default function piForge(pi: ExtensionAPI) {
 		latestContextDiffUsage: () => getLatestContextDiffUsage(payloadState.contextDiffHistory),
 	});
 	registerProfileCommand(pi, workspace, compileCycle, {
+		commandActivationError: hostCompatibility.commandActivationError,
 		activationError: hostCompatibility.activationError,
 		reloadProfiles: profileRuntime.reloadProfiles,
 		resolveProfile: profileRuntime.resolveProfile,

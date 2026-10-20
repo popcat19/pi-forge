@@ -82,7 +82,7 @@ export function createProfileRuntime(
 		}
 
 		ctx.ui.notify(
-			`pi-forge: auto-activated profile ${target.profile.id} once for this fresh session${result.warningCount ? ` with ${result.warningCount} warning(s)` : ""}; later manual changes will be preserved.`,
+			`pi-forge: auto-activated profile ${target.profile.id} once for this fresh session${result.warningCount ? ` with ${result.warningCount} warning(s)` : ""}; later manual changes will be preserved. Selection/settings apply before first-turn prompt compatibility is observed; missing prompt inputs do not roll them back or abort provider dispatch.`,
 			result.warningCount ? "warning" : "info",
 		);
 	}
