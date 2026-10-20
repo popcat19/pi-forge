@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Ordinary jobs cover pinned dev 1.0.2.
+          # Ordinary jobs cover pinned dev 1.2.0.
           # Compatibility matrix explicitly covers supported historic host versions.
           - pi-version: "0.87.0"
             typebox-version: "1.3.7"
@@ -61,6 +61,12 @@ jobs:
             typebox-version: "1.3.27"
           - pi-version: "1.0.1"
             typebox-version: "1.3.27"
+          - pi-version: "1.0.2"
+            typebox-version: "1.3.27"
+          - pi-version: "1.0.4"
+            typebox-version: "1.3.27"
+          - pi-version: "1.1.0"
+            typebox-version: "1.3.27"
     env:
       CHROME_PATH: /usr/bin/google-chrome
     steps:
@@ -71,13 +77,32 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install tested Pi host family
-        run: >-
-          npm install --no-save --package-lock=false
-          @earendil-works/pi-agent-core@${{ matrix.pi-version }}
-          @earendil-works/pi-ai@${{ matrix.pi-version }}
-          @earendil-works/pi-coding-agent@${{ matrix.pi-version }}
-          @earendil-works/pi-tui@${{ matrix.pi-version }}
-          typebox@${{ matrix.typebox-version }}
+        # Explicit coherent fixtures, not unconstrained fresh consumers. Upstream
+        # 1.x carets can otherwise mix codemode/MCP APIs across minor releases.
+        run: |
+          EXTRA_PINS=""
+          case "${{ matrix.pi-version }}" in
+            1.*) EXTRA_PINS="@earendil-works/pi-codemode@${{ matrix.pi-version }} @earendil-works/pi-mcp@${{ matrix.pi-version }} @earendil-works/pi-telemetry@${{ matrix.pi-version }} @earendil-works/chord@${{ matrix.pi-version }}" ;;
+          esac
+          npm install --no-save --package-lock=false \
+            @earendil-works/pi-agent-core@${{ matrix.pi-version }} \
+            @earendil-works/pi-ai@${{ matrix.pi-version }} \
+            @earendil-works/pi-coding-agent@${{ matrix.pi-version }} \
+            @earendil-works/pi-tui@${{ matrix.pi-version }} \
+            typebox@${{ matrix.typebox-version }} $EXTRA_PINS
+          EXPECTED_PI_VERSION=${{ matrix.pi-version }} node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import { readFileSync } from "node:fs";
+            import { resolveHostFamilyVersion } from "./scripts/packed-versions.ts";
+            const expected = process.env.EXPECTED_PI_VERSION;
+            assert.equal(resolveHostFamilyVersion(process.cwd()), expected);
+            if (expected.startsWith("1.")) for (const name of ["pi-codemode", "pi-mcp", "pi-telemetry", "chord"]) {
+              const { version } = JSON.parse(readFileSync(`node_modules/@earendil-works/${name}/package.json`, "utf8"));
+              console.log(`${name}@${version}`);
+              assert.equal(version, expected);
+            }
+          '
+
       - name: Run verification
         env:
           PI_TEST_VERSION: ${{ matrix.pi-version }}

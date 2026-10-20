@@ -2,6 +2,20 @@
 
 [中文文档](../README.md) · [English](../../guides/pi-1-compatibility.md)
 
+## Forge 0.5.9 候选：Pi 1.1 / 1.2
+
+开发 SDK 固定为 **1.2.0**，四个可选 SDK peer 范围扩大为：
+
+```text
+>=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.3.0
+```
+
+发布门槛尚待验证；不自动承诺 Pi 1.3 或其他 0.x。历史 CI 保留 1.0.2，并增加 1.0.4 / 1.1.0；常规任务使用 1.2.0。兼容任务核对实际解析版本，并明确固定 1.x codemode/MCP/telemetry/chord 为同版本 fixture。普通打包消费者不使用此覆盖：全新 Pi 1.1 安装可能因上游 caret 拉取 codemode 1.2 而独立失败，不能用 fixture 成功掩盖该发布门槛。
+
+Pi 1.2 的空闲自定义唤醒触发无 `prompt` 的 `before_agent_start`，启动时 `isIdle()` 已为 false。Forge 在编译 System 块之前，通过现有预览投影与历史 helper 一次解析当前分支的 `runtime.lastUserMessage`，直到结算保持工具后续请求的快照。没有符合条件的用户内容则为空；自定义消息不是用户提示。保留 helper 既有渲染（包括图片的 `[image]`）；role=user 不代表经过身份认证的人类。每个实际 start 重置 turn 频率规则；忙碌时 steering 不伪造 start 或用户消息。普通/旧宿主 user 事件仍以展开后的 prompt 为准，包括空文本/仅图片输入。旧宿主不发出 custom-start 时，不伪造该事件。
+
+下文记录 0.5.8 历史策略，不是候选版本的 peer 范围。
+
 ## Forge 0.5.8 与旧版本
 
 本指南介绍 **Forge 0.5.8** 兼容补丁。安装旧版 `@zihanw/pi-forge@0.5.7` 不会获得这些改动；该 artifact 的 Pi peer 范围仍为 `>=0.87.0 <0.88.0`。

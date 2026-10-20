@@ -2,6 +2,22 @@
 
 [Documentation](../README.md) · [简体中文](../zh-CN/guides/pi-1-compatibility.md)
 
+## Forge 0.5.9 candidate: Pi 1.1 / 1.2
+
+The candidate pins development SDKs to **1.2.0** and expands the four optional SDK peers to:
+
+```text
+>=0.87.0 <0.88.0 || 0.99.0 || 0.99.1 || 0.99.2 || >=1.0.0 <1.3.0
+```
+
+Release gates remain pending; this is not an implicit promise for 1.3 or other 0.x hosts. Historical 0.87/0.99/1.0 CI lanes remain, including 1.0.2, with 1.0.4 and 1.1.0 added; ordinary jobs use 1.2.0. Compatibility jobs assert the resolved family and explicitly pin 1.x codemode/MCP/telemetry/chord as coherent fixtures. Normal packed consumers do **not** receive that overlay: a fresh 1.1 install can pull codemode 1.2 via upstream carets and fail independently of Forge. Fixture success does not replace the normal-consumer release gate.
+
+Pi 1.2 emits `before_agent_start` for idle custom wakes (including Subagents completion notifications), with no `prompt`; startup is already busy (`isIdle() === false`). Forge resolves `runtime.lastUserMessage` once from the current branch's compaction-aware preview projection before compiling System blocks, using the existing latest non-empty user-content helper. No eligible content yields empty; custom content is not a user prompt. Existing preview rendering is retained (including `[image]` for image content). This is role-based history, not authenticated human identity. The snapshot survives tool followups until settlement. Each actual start, including custom starts, resets turn-frequency rewriting; busy steering does not invent a start or user message.
+
+Ordinary and legacy user events retain their authoritative expanded prompt, even empty/image-only. Older hosts that do not emit the custom-start event are not retrofitted with it. The tests characterize that host distinction rather than claiming 1.2 custom-start behavior on 1.1.
+
+The following 0.5.8 section records the previous release policy; it is not the candidate's peer range.
+
 ## Forge 0.5.8 versus older packages
 
 This guide covers the **Forge 0.5.8** compatibility patch. Installing the older `@zihanw/pi-forge@0.5.7` does not install these changes: that artifact still declares Pi peers `>=0.87.0 <0.88.0`.
