@@ -121,7 +121,7 @@ async function useProfile(pi, state, compileCycle, deps, id, ctx) {
         ctx.ui.notify("Usage: /profile use <id>", "warning");
         return;
     }
-    const hostError = deps.activationError?.(ctx);
+    const hostError = deps.commandActivationError?.(ctx) ?? deps.activationError?.(ctx);
     if (hostError) {
         ctx.ui.notify(hostError, "error");
         return;

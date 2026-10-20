@@ -7,6 +7,7 @@ export function createCompileCycleState() {
 export function resetCompileCycle(state) {
     state.currentSystemPromptOptions = undefined;
     state.currentLatestUserMessage = undefined;
+    state.currentRunIsCustom = undefined;
     state.currentCompilationContext = undefined;
     // Keep the last compiled system prompt/runtime available to /preset use and
     // /profile use after agent_end; those commands are normally issued while idle.

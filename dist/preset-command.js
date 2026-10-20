@@ -89,6 +89,12 @@ async function handlePresetCommand(workspace, compileCycle, deps, args, ctx) {
                 ctx.ui.notify("pi-forge: project is not trusted; refusing to activate a preset.", "warning");
                 return;
             }
+            // Explicit disable remains a recovery path even without command prompt APIs.
+            const hostError = !isDisabledPromptStackId(id) ? deps.hostCompatibility?.commandActivationError(ctx) : undefined;
+            if (hostError) {
+                ctx.ui.notify(hostError, "error");
+                return;
+            }
             const current = workspace.snapshot().active;
             const next = isDisabledPromptStackId(id) ? undefined : findStack(workspace, id);
             const cacheWarning = next || isDisabledPromptStackId(id)

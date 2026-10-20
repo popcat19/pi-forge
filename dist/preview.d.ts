@@ -1,3 +1,4 @@
+import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { type ExtensionCommandContext, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { type HostCompatibility } from "./host-compatibility.ts";
 import type { LoadedPromptStack, PromptCompileOptions, PromptStackDiagnostic } from "./types.ts";
@@ -25,6 +26,7 @@ export declare function buildPreview(ctx: ExtensionContext, target: LoadedPrompt
     preview: WebEditorPreview;
     diagnostics: PromptStackDiagnostic[];
 };
+export declare function getPreviewSessionMessages(ctx: ExtensionContext): AgentMessage[];
 export declare function renderDiagnostics(diagnostics: PromptStackDiagnostic[]): string;
 export declare function showText(ctx: ExtensionCommandContext, title: string, text: string): Promise<void>;
 //# sourceMappingURL=preview.d.ts.map

@@ -2,6 +2,7 @@ import { getPiBasePrompt, projectPresetSystemPrompt } from "./capability-project
 import { getLatestUserMessage, } from "./compiler.js";
 import { PromptCompilationContext, dedupeDiagnostics } from "./compiler.js";
 import { applyFinalizeRegexRulesToMessage, applyRequestFrequencyRulesToMessages, hasRequestFrequencyRules } from "./regex.js";
+import { getPreviewSessionMessages } from "./preview.js";
 import { promptRuntimeFromPi } from "./prompt-runtime.js";
 import { createHostCompatibility } from "./host-compatibility.js";
 import { formatResourceKey } from "./resource-identity.js";
@@ -144,14 +145,21 @@ export function registerLifecycleHandlers(pi, workspace, compileCycle, deps) {
         }
         compileCycle.currentSystemPromptOptions = event.systemPromptOptions;
         deps.refreshWebEditorHost(ctx, event.systemPromptOptions);
-        compileCycle.currentLatestUserMessage = event.prompt;
+        // Legacy hosts have no discriminator; their expanded prompt (even empty)
+        // remains authoritative. Custom content is not a fabricated user prompt.
+        const isCustom = "messageType" in event && event.messageType === "custom";
+        const latestUserMessage = "prompt" in event && !isCustom
+            ? event.prompt
+            : getLatestUserMessage(getPreviewSessionMessages(ctx)) ?? "";
+        compileCycle.currentRunIsCustom = isCustom;
+        compileCycle.currentLatestUserMessage = latestUserMessage;
         compileCycle.contextRewritePending = true;
         compileCycle.currentBaseSystemPrompt = event.systemPrompt;
         compileCycle.currentCompiledSystemPrompt = undefined;
         compileCycle.currentCompiledStackKey = undefined;
         compileCycle.currentPromptInputKey = undefined;
         compileCycle.currentCompilationContext = undefined;
-        compileCycle.currentCompilationRuntime = promptRuntimeFromPi(event.systemPromptOptions, ctx, event.prompt);
+        compileCycle.currentCompilationRuntime = promptRuntimeFromPi(event.systemPromptOptions, ctx, latestUserMessage);
         // Never return a forced full systemPrompt: Pi reapplies it AFTER context hooks,
         // which would silently suppress native instruction sections on tool follow-ups.
     });
@@ -180,7 +188,9 @@ export function registerLifecycleHandlers(pi, workspace, compileCycle, deps) {
                 }
                 if (compileCycle.contextRewritePending) {
                     compileCycle.contextRewritePending = false;
-                    const latest = getLatestUserMessage(messages) ?? compileCycle.currentLatestUserMessage;
+                    const latest = compileCycle.currentRunIsCustom
+                        ? compileCycle.currentLatestUserMessage
+                        : getLatestUserMessage(messages) ?? compileCycle.currentLatestUserMessage;
                     compileCycle.currentCompilationContext.setLatestUserMessage(latest ?? "");
                     const result = compileCycle.currentCompilationContext.compileMessages(messages);
                     messages = result.messages;

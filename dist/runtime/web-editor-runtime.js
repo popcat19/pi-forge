@@ -1,3 +1,4 @@
+import { formatStatusText } from "../status-text.js";
 import { showText } from "../preview.js";
 import { createHostCompatibility } from "../host-compatibility.js";
 import { createWebEditorHost, loadWebEditorSettings } from "../web-host.js";
@@ -56,7 +57,7 @@ export function createWebEditorRuntime(createRuntime, getContributionTransport, 
             return;
         webEditor.updateHost(createHost(ctx, promptOptions));
         remember(webEditor, ctx.cwd, preferredPort, promptOptions);
-        ctx.ui.setStatus("pi-forge-editor", ctx.ui.theme.fg("accent", `editor:${webEditor.port}`));
+        ctx.ui.setStatus("pi-forge-editor", formatStatusText(ctx, "accent", `editor:${webEditor.port}`));
     }
     async function open(ctx, mode = "open") {
         syncFromShared(ctx.cwd);
@@ -104,13 +105,13 @@ export function createWebEditorRuntime(createRuntime, getContributionTransport, 
                 }
             }
             remember(webEditor, ctx.cwd, settings.preferredPort, promptOptions);
-            ctx.ui.setStatus("pi-forge-editor", ctx.ui.theme.fg("accent", `editor:${webEditor.port}`));
+            ctx.ui.setStatus("pi-forge-editor", formatStatusText(ctx, "accent", `editor:${webEditor.port}`));
             ctx.ui.notify(`pi-forge: preset editor running at ${webEditor.url}`, "info");
         }
         else {
             webEditor.updateHost(createHost(ctx, promptOptions));
             remember(webEditor, ctx.cwd, settings.preferredPort, promptOptions);
-            ctx.ui.setStatus("pi-forge-editor", ctx.ui.theme.fg("accent", `editor:${webEditor.port}`));
+            ctx.ui.setStatus("pi-forge-editor", formatStatusText(ctx, "accent", `editor:${webEditor.port}`));
             ctx.ui.notify(`pi-forge: preset editor already running at ${webEditor.url}`, "info");
         }
         await showText(ctx, "pi-forge preset editor", `Open the local preset editor:\n\n${webEditor.url}\n\nServer bound to 127.0.0.1:${webEditor.port}\nOptional config: ${settings.configPath}\nProject: ${webEditorCwd}`);

@@ -1,3 +1,4 @@
+import { formatStatusText } from "../status-text.js";
 import { basename } from "node:path";
 import { isValidToolName } from "../codecs/capability.js";
 import { applyResourcePolicy, hasResourcePolicy, hasToolSelectionPolicy } from "../policy.js";
@@ -68,7 +69,7 @@ export function createToolPolicyRuntime(pi, getActiveStack) {
         lastApplied = [...nextTools];
         if (ctx) {
             const label = nextTools.length > 0 ? `tools:${nextTools.length}` : "tools:none";
-            ctx.ui.setStatus("pi-forge-tools", ctx.ui.theme.fg(nextTools.length > 0 ? "accent" : "warning", label));
+            ctx.ui.setStatus("pi-forge-tools", formatStatusText(ctx, nextTools.length > 0 ? "accent" : "warning", label));
         }
     }
     function restore(ctx) {

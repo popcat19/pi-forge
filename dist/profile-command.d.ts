@@ -1,10 +1,11 @@
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { type LoadedAgentProfile, type ResolvedAgentProfile } from "./agent-profile.ts";
 import type { CompileCycleState } from "./compile-cycle.ts";
 import type { ContextDiffProviderUsage } from "./context-diff-history.ts";
 import type { ForgeWorkspace } from "./workspace.ts";
 import type { PromptStack } from "./types.ts";
 export interface ProfileCommandDeps {
+    commandActivationError?(ctx: ExtensionCommandContext): string | undefined;
     activationError?(ctx?: ExtensionContext): string | undefined;
     reloadProfiles(ctx: ExtensionContext): void | Promise<void>;
     resolveProfile(target: LoadedAgentProfile, ctx: ExtensionContext): ResolvedAgentProfile;

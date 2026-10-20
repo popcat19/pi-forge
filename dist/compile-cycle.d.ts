@@ -9,6 +9,8 @@ import type { PromptRuntimeSnapshot, PromptStackDiagnostic } from "./types.ts";
 export interface CompileCycleState {
     currentSystemPromptOptions?: BuildSystemPromptOptions;
     currentLatestUserMessage?: string;
+    /** Custom wakes resolve branch text once, before System compilation. */
+    currentRunIsCustom?: boolean;
     currentCompilationContext?: PromptCompilationContext;
     /** Inputs/results from the most recent compiled system prompt, for cache-impact previews. These survive agent_end. */
     currentCompilationRuntime?: PromptRuntimeSnapshot;

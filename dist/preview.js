@@ -197,7 +197,7 @@ function renderPreviewMetadata(preview) {
     }
     return lines.join("\n");
 }
-function getPreviewSessionMessages(ctx) {
+export function getPreviewSessionMessages(ctx) {
     const entries = (ctx.sessionManager.getEntries ? ctx.sessionManager.getEntries() : getCurrentBranchEntries(ctx));
     const leafId = ctx.sessionManager.getLeafId ? ctx.sessionManager.getLeafId() : undefined;
     const projection = buildSessionProjection(entries, leafId);

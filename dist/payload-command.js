@@ -1,3 +1,4 @@
+import { formatStatusText } from "./status-text.js";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { showText } from "./preview.js";
@@ -145,7 +146,7 @@ export function armPayloadIntercept(state, ctx, savePath, displayTarget = "edito
     state.interceptPayloadDisplayTarget = displayTarget;
     state.payloadCaptureArmedAt = new Date().toISOString();
     state.latestProviderPayloadCapture = undefined;
-    ctx.ui.setStatus("pi-forge-intercept", ctx.ui.theme.fg("warning", savePath ? "payload:armed+save" : "payload:armed"));
+    ctx.ui.setStatus("pi-forge-intercept", formatStatusText(ctx, "warning", savePath ? "payload:armed+save" : "payload:armed"));
     if (displayTarget === "web") {
         ctx.ui.notify(savePath ? `pi-forge: next provider payload will be captured in the web editor and saved to ${savePath}.` : "pi-forge: next provider payload will be captured in the web editor.", "info");
         return;
