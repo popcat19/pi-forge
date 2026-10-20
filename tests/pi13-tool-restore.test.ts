@@ -52,8 +52,11 @@ async function fixture(policy: "allow" | "deny", modifiers: boolean) {
 			noExtensions: true, noSkills: true, noPromptTemplates: true, noThemes: true, noContextFiles: true,
 			extensionFactories: [api => {
 				api.registerProvider(provider.provider);
-				api.registerTool({ name: "restore_extra", label: "Restore extra", description: "Offline inactive tool", defaultActive: false,
-					parameters: AI.Type.Object({}), execute: async () => { throw new Error("No tool execution expected"); } });
+				// Not an inline literal: `defaultActive` only exists in newer SDK types, and
+				// older hosts (e.g. 0.87) simply ignore it at runtime.
+				const restoreExtra = { name: "restore_extra", label: "Restore extra", description: "Offline inactive tool", defaultActive: false,
+					parameters: AI.Type.Object({}), execute: async () => { throw new Error("No tool execution expected"); } };
+				api.registerTool(restoreExtra);
 			}, piForge],
 		});
 		await loader.reload(); assert.deepEqual(loader.getExtensions().errors, []);
