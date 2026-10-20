@@ -239,7 +239,7 @@ function renderPreviewMetadata(preview: WebEditorPreview): string {
 	return lines.join("\n");
 }
 
-function getPreviewSessionMessages(ctx: ExtensionContext): AgentMessage[] {
+export function getPreviewSessionMessages(ctx: ExtensionContext): AgentMessage[] {
 	const entries = (ctx.sessionManager.getEntries ? ctx.sessionManager.getEntries() : getCurrentBranchEntries(ctx)) as SessionEntry[];
 	const leafId = ctx.sessionManager.getLeafId ? ctx.sessionManager.getLeafId() : undefined;
 	const projection = buildSessionProjection(entries, leafId);

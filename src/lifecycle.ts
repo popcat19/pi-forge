@@ -7,6 +7,7 @@ import {
 } from "./compiler.ts";
 import { PromptCompilationContext, dedupeDiagnostics } from "./compiler.ts";
 import { applyFinalizeRegexRulesToMessage, applyRequestFrequencyRulesToMessages, hasRequestFrequencyRules } from "./regex.ts";
+import { getPreviewSessionMessages } from "./preview.ts";
 import { promptRuntimeFromPi } from "./prompt-runtime.ts";
 import { createHostCompatibility, type HostCompatibility } from "./host-compatibility.ts";
 import { formatResourceKey } from "./resource-identity.ts";
@@ -187,14 +188,21 @@ export function registerLifecycleHandlers(
 		}
 		compileCycle.currentSystemPromptOptions = event.systemPromptOptions;
 		deps.refreshWebEditorHost(ctx, event.systemPromptOptions);
-		compileCycle.currentLatestUserMessage = event.prompt;
+		// Legacy hosts have no discriminator; their expanded prompt (even empty)
+		// remains authoritative. Custom content is not a fabricated user prompt.
+		const isCustom = "messageType" in event && event.messageType === "custom";
+		const latestUserMessage = "prompt" in event && !isCustom
+			? event.prompt
+			: getLatestUserMessage(getPreviewSessionMessages(ctx)) ?? "";
+		compileCycle.currentRunIsCustom = isCustom;
+		compileCycle.currentLatestUserMessage = latestUserMessage;
 		compileCycle.contextRewritePending = true;
 		compileCycle.currentBaseSystemPrompt = event.systemPrompt;
 		compileCycle.currentCompiledSystemPrompt = undefined;
 		compileCycle.currentCompiledStackKey = undefined;
 		compileCycle.currentPromptInputKey = undefined;
 		compileCycle.currentCompilationContext = undefined;
-		compileCycle.currentCompilationRuntime = promptRuntimeFromPi(event.systemPromptOptions, ctx, event.prompt);
+		compileCycle.currentCompilationRuntime = promptRuntimeFromPi(event.systemPromptOptions, ctx, latestUserMessage);
 		// Never return a forced full systemPrompt: Pi reapplies it AFTER context hooks,
 		// which would silently suppress native instruction sections on tool follow-ups.
 	});
@@ -224,7 +232,9 @@ export function registerLifecycleHandlers(
 				}
 				if (compileCycle.contextRewritePending) {
 					compileCycle.contextRewritePending = false;
-					const latest = getLatestUserMessage(messages) ?? compileCycle.currentLatestUserMessage;
+					const latest = compileCycle.currentRunIsCustom
+						? compileCycle.currentLatestUserMessage
+						: getLatestUserMessage(messages) ?? compileCycle.currentLatestUserMessage;
 					compileCycle.currentCompilationContext.setLatestUserMessage(latest ?? "");
 					const result = compileCycle.currentCompilationContext.compileMessages(messages);
 					messages = result.messages;
