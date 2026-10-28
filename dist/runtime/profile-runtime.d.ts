@@ -10,5 +10,6 @@ export declare function createProfileRuntime(pi: ExtensionAPI, workspace: ForgeW
     activationError?(ctx?: ExtensionContext): string | undefined;
     setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
     updateStatus(ctx: ExtensionContext): void;
+    restoreRememberedSelection?(ctx: ExtensionContext): boolean;
 }): ProfileRuntime;
 //# sourceMappingURL=profile-runtime.d.ts.map

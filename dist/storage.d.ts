@@ -21,4 +21,6 @@ export declare function isInsidePromptStackStorage(cwd: string, filePath: string
 export declare function isSafePromptStackMutationPath(cwd: string, filePath: string): boolean;
 export declare function isInsideGlobalPromptStackStorage(filePath: string): boolean;
 export declare function isSafeGlobalPromptStackMutationPath(filePath: string): boolean;
+export declare function readRememberedPreset(cwd: string): string | undefined;
+export declare function writeRememberedPreset(selector: string, cwd: string): void;
 //# sourceMappingURL=storage.d.ts.map

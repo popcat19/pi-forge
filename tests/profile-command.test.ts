@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import type { Model } from "@earendil-works/pi-ai";
 import { AGENT_PROFILE_TYPE, agentProfileFingerprint, agentProfilePath, type AgentProfile, type AgentProfileProvenance } from "../src/agent-profile.ts";
-import { GLOBAL_FORGE_DIR_ENV } from "../src/storage.ts";
+import { GLOBAL_FORGE_DIR_ENV, writeRememberedPreset } from "../src/storage.ts";
 import { PROFILE_ENTRY_TYPE } from "../src/session-adapter.ts";
 import { createContext, createHarness, startSession, writeProfile, writeStack } from "./helpers/index-command-harness.ts";
 
@@ -105,8 +105,9 @@ test("/profile use applies once, previews effective tools, and reports runtime d
 	assert.match(status, /project:reviewer-stack → \(none\)/);
 });
 
-test("fresh sessions auto-activate one profile instead of the standalone default stack", async () => {
+test("fresh sessions auto-activate one profile instead of remembered none or the standalone default stack", async () => {
 	const cwd = mkdtempSync(join(tmpdir(), "pi-forge-profile-command-"));
+	writeRememberedPreset("none", cwd);
 	const currentModel = model("test", "current");
 	const targetModel = model("test", "target");
 	writeStack(cwd, "default.json", {
@@ -149,6 +150,7 @@ test("fresh sessions auto-activate one profile instead of the standalone default
 	assert.equal(context.statuses["pi-forge"], "stack:worker-stack");
 	assert.ok(harness.appended.some((entry) => entry.type === PROFILE_ENTRY_TYPE));
 	assert.match(context.notifications.find((entry) => /auto-activated profile/.test(entry.message))?.message ?? "", /worker/);
+	assert.equal(JSON.parse(readFileSync(join(process.env[GLOBAL_FORGE_DIR_ENV]!, "last-preset.json"), "utf8")).selector, "none");
 });
 
 test("startup with existing conversation content does not auto-activate a profile", async () => {
@@ -215,6 +217,7 @@ test("an auto-activated profile with a null prompt stack suppresses standalone s
 
 test("ambiguous profile autoload fails closed instead of selecting a fallback stack", async () => {
 	const cwd = mkdtempSync(join(tmpdir(), "pi-forge-profile-command-"));
+	writeRememberedPreset("project:standalone-default", cwd);
 	const currentModel = model("test", "current");
 	writeStack(cwd, "default.json", {
 		schemaVersion: 1,
@@ -443,4 +446,17 @@ test("untrusted projects cannot apply or save profiles, but reload stays global-
 	assert.match(context.notifications.at(-1)?.message ?? "", /remain disabled/);
 	await harness.commands.profile.handler("use blocked", context.ctx);
 	assert.match(context.notifications.at(-1)?.message ?? "", /not trusted/);
+});
+
+test("invalid automatic profile blocks remembered preset without rewriting preference", async () => {
+	const cwd = mkdtempSync(join(tmpdir(), "forge-invalid-auto-memory-"));
+	writeStack(cwd, "chosen.json", { schemaVersion: 1, id: "chosen", items: [] });
+	writeRememberedPreset("project:chosen", cwd);
+	const current = model("test", "current");
+	writeProfile(cwd, "invalid.json", { ...profile("invalid", model("test", "missing"), "chosen"), autoActivate: true });
+	const { harness, context } = runtime(cwd, current, [current]);
+	await startSession(harness, context.ctx);
+	assert.equal(context.statuses["pi-forge"], undefined);
+	assert.ok(context.notifications.some(({ message }) => message.includes("failed preflight")));
+	assert.equal(JSON.parse(readFileSync(join(process.env[GLOBAL_FORGE_DIR_ENV]!, "last-preset.json"), "utf8")).selector, "project:chosen");
 });

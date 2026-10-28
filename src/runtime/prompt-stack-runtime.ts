@@ -1,7 +1,8 @@
+import { readRememberedPreset, writeRememberedPreset } from "../storage.ts";
 import { formatStatusText } from "../status-text.ts";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { createResourceCatalog } from "../catalog.ts";
-import { isDisabledPromptStackId } from "../loader.ts";
+import { isDisabledPromptStackId, isUsablePromptStack } from "../loader.ts";
 import { formatResourceKey, parseResourceSelector } from "../resource-identity.ts";
 import { persistActiveSelection as persistActiveSelectionEntry } from "../session-adapter.ts";
 import type { CompileCycleState } from "../compile-cycle.ts";
@@ -21,6 +22,8 @@ export interface PromptStackRuntime {
 	restorePersistedActiveId(id?: string): void;
 	persistActiveSelection(): void;
 	setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
+	selectActive(id: string | undefined, ctx?: ExtensionContext): boolean;
+	restoreRememberedSelection(ctx: ExtensionContext): boolean;
 	lastActivationError(): string | undefined;
 	reloadStacks(ctx: ExtensionContext, preferredId?: string, options?: { deferToolPolicy?: boolean; suppressAutoActivate?: boolean }): Promise<void>;
 	updateStatus(ctx: ExtensionContext): void;
@@ -131,6 +134,27 @@ export function createPromptStackRuntime(
 		return true;
 	}
 
+	function selectActive(id: string | undefined, ctx?: ExtensionContext): boolean {
+		if (!setActive(id, ctx)) return false;
+		if (ctx?.mode === "tui") {
+			try {
+				writeRememberedPreset(selectedActiveId() ?? "none", ctx.cwd);
+			} catch {
+				ctx.ui.notify("pi-forge: preset changed, but the last preset preference could not be saved.", "warning");
+			}
+		}
+		return true;
+	}
+
+	function restoreRememberedSelection(ctx: ExtensionContext): boolean {
+		if (ctx.mode !== "tui") return false;
+		const selector = readRememberedPreset(ctx.cwd);
+		if (selector === undefined) return false;
+		const resolution = resolveTargetStack(selector);
+		if (!resolution.ok || (resolution.target && !isUsablePromptStack(resolution.target))) return false;
+		return setActive(selector, ctx);
+	}
+
 	async function reloadStacks(
 		ctx: ExtensionContext,
 		preferredId?: string,
@@ -186,5 +210,5 @@ export function createPromptStackRuntime(
 		ctx.ui.setStatus("pi-forge-diagnostics", undefined);
 	}
 
-	return { dispose, activeId, selectedActiveId, restorePersistedActiveId, persistActiveSelection, setActive, lastActivationError: lastActivationErrorFn, reloadStacks, updateStatus, notifyActivePreset, recordCompileDiagnostics };
+	return { dispose, activeId, selectedActiveId, restorePersistedActiveId, persistActiveSelection, setActive, selectActive, restoreRememberedSelection, lastActivationError: lastActivationErrorFn, reloadStacks, updateStatus, notifyActivePreset, recordCompileDiagnostics };
 }

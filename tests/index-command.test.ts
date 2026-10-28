@@ -1883,3 +1883,136 @@ test("untrusted projects browse global stacks but cannot activate them", async (
 		process.env[GLOBAL_FORGE_DIR_ENV] = previousGlobal;
 	}
 });
+
+function rememberedFixture() {
+	const cwd = mkdtempSync(join(tmpdir(), "pi-forge-memory-"));
+	process.env[GLOBAL_FORGE_DIR_ENV] = mkdtempSync(join(tmpdir(), "pi-forge-memory-global-"));
+	for (const id of ["default", "chosen"]) writeStack(cwd, `${id}.json`, {
+		schemaVersion: 1, id, autoActivate: id === "default", items: [],
+	});
+	const path = join(process.env[GLOBAL_FORGE_DIR_ENV]!, "last-preset.json");
+	const read = () => JSON.parse(readFileSync(path, "utf8"));
+	return { cwd, path, read };
+}
+
+test("explicit TUI preset use survives shutdown and fresh startup, including none", async () => {
+	const { cwd, read } = rememberedFixture();
+	for (const selector of ["chosen", "none"]) {
+		const harness = createHarness();
+		const { ctx } = createContext(cwd);
+		await startSession(harness, ctx);
+		await harness.commands.preset.handler(`use ${selector}`, ctx);
+		assert.equal(read().selector, selector === "none" ? "none" : "project:chosen");
+		await harness.events.session_shutdown({}, ctx);
+		assert.equal(read().selector, selector === "none" ? "none" : "project:chosen");
+		const fresh = createContext(cwd);
+		await startSession(createHarness(), fresh.ctx);
+		assert.equal(fresh.statuses["pi-forge"], selector === "none" ? undefined : "stack:chosen");
+	}
+});
+
+test("remembered preset excludes RPC, print, and missing-mode hosts, and preserves branch state", async () => {
+	const { cwd, path } = rememberedFixture();
+	writeFileSync(path, JSON.stringify({ version: 1, selector: "none" }));
+	for (const mode of ["rpc", "print", undefined]) {
+		const harness = createHarness();
+		const context = createContext(cwd);
+		context.ctx.mode = mode;
+		await startSession(harness, context.ctx);
+		assert.equal(context.statuses["pi-forge"], "stack:default");
+		await harness.commands.preset.handler("use chosen", context.ctx);
+		assert.equal(JSON.parse(readFileSync(path, "utf8")).selector, "none");
+	}
+	for (const reason of ["resume", "fork", "reload", "startup"]) {
+		const harness = createHarness();
+		const context = createContext(cwd, [{ type: "custom", customType: "pi-forge-prompt-stack-state", data: { activeStackId: "project:chosen" } }]);
+		await harness.events.session_start({ type: "session_start", reason }, context.ctx);
+		assert.equal(context.statuses["pi-forge"], "stack:chosen");
+		await harness.events.session_tree({}, context.ctx);
+		assert.equal(context.statuses["pi-forge"], "stack:chosen");
+		assert.equal(JSON.parse(readFileSync(path, "utf8")).selector, "none");
+	}
+});
+
+test("missing, malformed, invalid, and foreign-project memory falls back without rewriting preference", async () => {
+	const { cwd, path } = rememberedFixture();
+	const original = createHarness();
+	const originalContext = createContext(cwd);
+	await startSession(original, originalContext.ctx);
+	await original.commands.preset.handler("use chosen", originalContext.ctx);
+	const foreign = mkdtempSync(join(tmpdir(), "pi-forge-foreign-"));
+	for (const id of ["default", "chosen"]) writeStack(foreign, `${id}.json`, { schemaVersion: 1, id, autoActivate: id === "default", items: [] });
+	const foreignContext = createContext(foreign);
+	await startSession(createHarness(), foreignContext.ctx);
+	assert.equal(foreignContext.statuses["pi-forge"], "stack:default");
+	for (const content of ["{", "null", '{"version":2,"selector":"none"}', '{"version":1,"selector":"chosen"}', '{"version":1,"selector":"global:missing"}']) {
+		writeFileSync(path, content);
+		const context = createContext(cwd);
+		await startSession(createHarness(), context.ctx);
+		assert.equal(context.statuses["pi-forge"], "stack:default");
+		assert.equal(readFileSync(path, "utf8"), content);
+	}
+});
+
+test("failed explicit switches retain remembered choice and disk failure does not undo successful selection", async () => {
+	const { cwd, path, read } = rememberedFixture();
+	const harness = createHarness();
+	const context = createContext(cwd);
+	await startSession(harness, context.ctx);
+	await harness.commands.preset.handler("use chosen", context.ctx);
+	await harness.commands.preset.handler("use missing", context.ctx);
+	assert.equal(read().selector, "project:chosen");
+	const untrusted = createContext(cwd, [], { trusted: false });
+	await harness.commands.preset.handler("use default", untrusted.ctx);
+	assert.equal(read().selector, "project:chosen");
+	rmSync(path);
+	mkdirSync(path);
+	await harness.commands.preset.handler("use none", context.ctx);
+	assert.equal(context.statuses["pi-forge"], undefined);
+	assert.ok(context.notifications.some(({ message }) => message.includes("could not be saved")));
+});
+
+test("browser activate and disable remember only successful explicit TUI changes", async () => {
+	const { cwd, read, path } = rememberedFixture();
+	const harness = createHarness();
+	const context = createContext(cwd);
+	await startSession(harness, context.ctx);
+	writeForgeConfig(cwd, { webEditor: { port: await getFreePort() } });
+	await harness.commands.preset.handler("ui", context.ctx);
+	const url = latestEditorUrl(context.editors);
+	const headers = { "x-pi-forge-token": url.searchParams.get("token")! };
+	try {
+		const post = (route: string) => fetch(new URL(route, url), { method: "POST", headers });
+		assert.equal((await post("/api/stacks/chosen/activate")).status, 200);
+		assert.equal(read().selector, "project:chosen");
+		assert.equal((await post("/api/stacks/missing/activate")).status, 404);
+		assert.equal(read().selector, "project:chosen");
+		assert.equal((await post("/api/disable")).status, 200);
+		assert.equal(read().selector, "none");
+		context.ctx.mode = "rpc";
+		const before = readFileSync(path, "utf8");
+		assert.equal((await post("/api/stacks/chosen/activate")).status, 200);
+		assert.equal(readFileSync(path, "utf8"), before);
+	} finally {
+		await harness.commands.preset.handler("ui stop", context.ctx);
+		await harness.events.session_shutdown({}, context.ctx);
+	}
+});
+
+test("remembered global selection stays global and invalid resources fall back", async () => {
+	const { cwd, path } = rememberedFixture();
+	mkdirSync(globalPromptStacksDir(), { recursive: true });
+	writeFileSync(join(globalPromptStacksDir(), "chosen.json"), JSON.stringify({ schemaVersion: 1, id: "chosen", items: [] }));
+	writeFileSync(path, JSON.stringify({ version: 1, selector: "global:chosen" }));
+	const harness = createHarness();
+	const context = createContext(cwd);
+	await startSession(harness, context.ctx);
+	assert.deepEqual(harness.appended.at(-1), { type: "pi-forge-prompt-stack-state", data: { activeStackId: "global:chosen" } });
+	writeFileSync(join(globalPromptStacksDir(), "chosen.json"), JSON.stringify({ schemaVersion: 1, id: "chosen", items: [{ kind: "invalid" }] }));
+	const fresh = createContext(cwd);
+	await startSession(createHarness(), fresh.ctx);
+	assert.equal(fresh.statuses["pi-forge"], "stack:default");
+	const untrusted = createContext(cwd, [], { trusted: false });
+	await startSession(createHarness(), untrusted.ctx);
+	assert.equal(untrusted.statuses["pi-forge"], undefined);
+});

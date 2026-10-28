@@ -14,6 +14,8 @@ export interface PromptStackRuntime {
     restorePersistedActiveId(id?: string): void;
     persistActiveSelection(): void;
     setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
+    selectActive(id: string | undefined, ctx?: ExtensionContext): boolean;
+    restoreRememberedSelection(ctx: ExtensionContext): boolean;
     lastActivationError(): string | undefined;
     reloadStacks(ctx: ExtensionContext, preferredId?: string, options?: {
         deferToolPolicy?: boolean;

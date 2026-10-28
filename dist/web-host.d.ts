@@ -13,7 +13,9 @@ export interface WebHostRuntime {
     getActive(): LoadedPromptStack | undefined;
     getActiveId(): string | undefined;
     getSelectedActiveId(): string | undefined;
-    setActive(id: string | undefined): boolean;
+    setActive(id: string | undefined, options?: {
+        remember?: boolean;
+    }): boolean;
     lastActivationError?(): string | undefined;
     validatePresetSwitch?(target: LoadedPromptStack): string | undefined;
     reloadStacks(preferredId?: string): Promise<void>;

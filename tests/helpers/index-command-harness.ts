@@ -1,5 +1,6 @@
+import { beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer as createNetServer, type Server as NetServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -16,6 +17,11 @@ import { GLOBAL_FORGE_DIR_ENV, forgeExtensionsDir, globalForgeExtensionsDir } fr
 // importing this module.
 process.env[GLOBAL_FORGE_CONFIG_PATH_ENV] ??= join(tmpdir(), "pi-forge-harness-no-global-config.json");
 process.env[GLOBAL_FORGE_DIR_ENV] ??= mkdtempSync(join(tmpdir(), "pi-forge-harness-global-forge-"));
+
+// Each test starts without a cross-session user preference from a previous test.
+beforeEach(() => {
+	rmSync(join(process.env[GLOBAL_FORGE_DIR_ENV]!, "last-preset.json"), { force: true, recursive: true });
+});
 
 export function writeStack(cwd: string, name: string, value: unknown): void {
 	mkdirSync(promptStacksDir(cwd), { recursive: true });

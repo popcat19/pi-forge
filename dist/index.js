@@ -66,6 +66,7 @@ export default function piForge(pi) {
         activationError: hostCompatibility.activationError,
         setActive: (id, ctx) => stackRuntime.setActive(id, ctx),
         updateStatus: stackRuntime.updateStatus,
+        restoreRememberedSelection: stackRuntime.restoreRememberedSelection,
     });
     const webEditorRuntime = createWebEditorRuntime((ctx, promptOptions) => ({
         activationError: hostCompatibility.activationError,
@@ -78,7 +79,7 @@ export default function piForge(pi) {
         getActive: () => currentActive(),
         getActiveId: stackRuntime.activeId,
         getSelectedActiveId: stackRuntime.selectedActiveId,
-        setActive: (id) => stackRuntime.setActive(id, ctx),
+        setActive: (id, options) => options?.remember ? stackRuntime.selectActive(id, ctx) : stackRuntime.setActive(id, ctx),
         lastActivationError: stackRuntime.lastActivationError,
         validatePresetSwitch: (target) => instructions.validatePresetSwitch(target, ctx),
         reloadStacks: (preferredId) => stackRuntime.reloadStacks(ctx, preferredId),
@@ -152,7 +153,7 @@ export default function piForge(pi) {
     registerPresetCommand(pi, workspace, compileCycle, {
         hostCompatibility,
         selectedActiveId: stackRuntime.selectedActiveId,
-        setActive: stackRuntime.setActive,
+        setActive: stackRuntime.selectActive,
         lastActivationError: stackRuntime.lastActivationError,
         reloadStacks: stackRuntime.reloadStacks,
         openWebEditor: webEditorRuntime.open,

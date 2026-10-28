@@ -1,4 +1,7 @@
-import { existsSync, lstatSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { activeStateProjectKey } from "./active-state.js";
+import { parseResourceSelector } from "./resource-identity.js";
+import { existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 /** Development/test override for the user-owned global Forge root. */
@@ -90,5 +93,39 @@ function pathTraversesNoSymlink(root, filePath) {
             return false;
     }
     return true;
+}
+export function readRememberedPreset(cwd) {
+    try {
+        const value = JSON.parse(readFileSync(join(globalForgeDir(), "last-preset.json"), "utf8"));
+        if (!value || value.version !== 1 || typeof value.selector !== "string")
+            return undefined;
+        if (value.selector === "none")
+            return "none";
+        const parsed = parseResourceSelector(value.selector);
+        if (!parsed.ok || !parsed.selector.scope)
+            return undefined;
+        if (parsed.selector.scope === "project" && value.projectKey !== activeStateProjectKey(cwd))
+            return undefined;
+        return value.selector;
+    }
+    catch {
+        return undefined;
+    }
+}
+export function writeRememberedPreset(selector, cwd) {
+    const dir = globalForgeDir();
+    const temporary = join(dir, `.last-preset-${randomUUID()}.tmp`);
+    try {
+        mkdirSync(dir, { recursive: true });
+        writeFileSync(temporary, JSON.stringify({
+            version: 1,
+            selector,
+            ...(selector.startsWith("project:") ? { projectKey: activeStateProjectKey(cwd) } : {}),
+        }) + "\n", { flag: "wx", mode: 0o600 });
+        renameSync(temporary, join(dir, "last-preset.json"));
+    }
+    finally {
+        rmSync(temporary, { force: true });
+    }
 }
 //# sourceMappingURL=storage.js.map

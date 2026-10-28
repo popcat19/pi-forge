@@ -23,6 +23,8 @@ export function createProfileRuntime(pi, workspace, deps) {
         const snapshot = workspace.snapshot();
         const candidates = findAutoActivateAgentProfileCandidates(snapshot.profiles);
         if (candidates.length === 0) {
+            if (deps.restoreRememberedSelection?.(ctx))
+                return;
             const fallback = chooseDefaultStack([...snapshot.stacks]);
             workspace.setActiveStack(fallback ? formatResourceKey(fallback.key) : undefined);
             deps.updateStatus(ctx);

@@ -1,6 +1,7 @@
+import { readRememberedPreset, writeRememberedPreset } from "../storage.js";
 import { formatStatusText } from "../status-text.js";
 import { createResourceCatalog } from "../catalog.js";
-import { isDisabledPromptStackId } from "../loader.js";
+import { isDisabledPromptStackId, isUsablePromptStack } from "../loader.js";
 import { formatResourceKey, parseResourceSelector } from "../resource-identity.js";
 import { persistActiveSelection as persistActiveSelectionEntry } from "../session-adapter.js";
 export function createPromptStackRuntime(pi, workspace, compileCycle, deps) {
@@ -90,6 +91,30 @@ export function createPromptStackRuntime(pi, workspace, compileCycle, deps) {
         deps.syncToolPolicy(ctx);
         return true;
     }
+    function selectActive(id, ctx) {
+        if (!setActive(id, ctx))
+            return false;
+        if (ctx?.mode === "tui") {
+            try {
+                writeRememberedPreset(selectedActiveId() ?? "none", ctx.cwd);
+            }
+            catch {
+                ctx.ui.notify("pi-forge: preset changed, but the last preset preference could not be saved.", "warning");
+            }
+        }
+        return true;
+    }
+    function restoreRememberedSelection(ctx) {
+        if (ctx.mode !== "tui")
+            return false;
+        const selector = readRememberedPreset(ctx.cwd);
+        if (selector === undefined)
+            return false;
+        const resolution = resolveTargetStack(selector);
+        if (!resolution.ok || (resolution.target && !isUsablePromptStack(resolution.target)))
+            return false;
+        return setActive(selector, ctx);
+    }
     async function reloadStacks(ctx, preferredId, options = {}) {
         if (!ctx.isProjectTrusted()) {
             workspace.disposeExtensions();
@@ -139,6 +164,6 @@ export function createPromptStackRuntime(pi, workspace, compileCycle, deps) {
         }
         ctx.ui.setStatus("pi-forge-diagnostics", undefined);
     }
-    return { dispose, activeId, selectedActiveId, restorePersistedActiveId, persistActiveSelection, setActive, lastActivationError: lastActivationErrorFn, reloadStacks, updateStatus, notifyActivePreset, recordCompileDiagnostics };
+    return { dispose, activeId, selectedActiveId, restorePersistedActiveId, persistActiveSelection, setActive, selectActive, restoreRememberedSelection, lastActivationError: lastActivationErrorFn, reloadStacks, updateStatus, notifyActivePreset, recordCompileDiagnostics };
 }
 //# sourceMappingURL=prompt-stack-runtime.js.map

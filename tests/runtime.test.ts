@@ -142,3 +142,50 @@ test("an allow list containing wildcard stays on the active baseline", () => {
 	assert.deepEqual(activeTools, ["read", "bash"]);
 	assert.deepEqual(runtime.previewToolNames(active.stack), ["read", "bash"]);
 });
+
+test("explicit selection remembers only after activation and tool-policy preflight succeed", async () => {
+	const { createPromptStackRuntime } = await import("../src/runtime/prompt-stack-runtime.ts");
+	const { mkdtempSync, readFileSync, readdirSync, rmSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const { join } = await import("node:path");
+	const { GLOBAL_FORGE_DIR_ENV, writeRememberedPreset } = await import("../src/storage.ts");
+	const previous = process.env[GLOBAL_FORGE_DIR_ENV];
+	const root = mkdtempSync(join(tmpdir(), "forge-preflight-memory-"));
+	process.env[GLOBAL_FORGE_DIR_ENV] = root;
+	try {
+		const target = { key: { scope: "global", id: "chosen" }, stack: { id: "chosen" }, diagnostics: [] };
+		let active: any;
+		let error: string | undefined;
+		let syncThrows = false;
+		const workspace: any = {
+			snapshot: () => ({ stacks: [target], active }),
+			setActiveStack: () => { active = target; return true; },
+		};
+		const ctx: any = { mode: "tui", cwd: root, isProjectTrusted: () => true, ui: { setStatus() {}, notify() {} } };
+		const runtime = createPromptStackRuntime({ appendEntry() {} } as any, workspace, {} as any, {
+			syncToolPolicy: () => { if (syncThrows) throw new Error("sync failed"); },
+			validatePresetSwitch: () => error,
+		});
+		writeRememberedPreset("none", root);
+		error = "retained capability conflict";
+		assert.equal(runtime.selectActive("global:chosen", ctx), false);
+		assert.equal(active, undefined);
+		assert.equal(JSON.parse(readFileSync(join(root, "last-preset.json"), "utf8")).selector, "none");
+		writeRememberedPreset("global:chosen", root);
+		assert.equal(runtime.restoreRememberedSelection(ctx), false);
+		assert.equal(active, undefined);
+		error = undefined;
+		syncThrows = true;
+		writeRememberedPreset("none", root);
+		assert.throws(() => runtime.selectActive("global:chosen", ctx), /sync failed/);
+		assert.equal(JSON.parse(readFileSync(join(root, "last-preset.json"), "utf8")).selector, "none");
+		syncThrows = false;
+		assert.equal(runtime.selectActive("global:chosen", ctx), true);
+		assert.equal(JSON.parse(readFileSync(join(root, "last-preset.json"), "utf8")).selector, "global:chosen");
+		assert.deepEqual(readdirSync(root), ["last-preset.json"]);
+	} finally {
+		if (previous === undefined) delete process.env[GLOBAL_FORGE_DIR_ENV];
+		else process.env[GLOBAL_FORGE_DIR_ENV] = previous;
+		rmSync(root, { recursive: true, force: true });
+	}
+});

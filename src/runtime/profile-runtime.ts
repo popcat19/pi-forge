@@ -25,6 +25,7 @@ export function createProfileRuntime(
 		activationError?(ctx?: ExtensionContext): string | undefined;
 		setActive(id: string | undefined, ctx?: ExtensionContext): boolean;
 		updateStatus(ctx: ExtensionContext): void;
+		restoreRememberedSelection?(ctx: ExtensionContext): boolean;
 	},
 ): ProfileRuntime {
 	function reloadProfiles(ctx: ExtensionContext): void {
@@ -48,6 +49,7 @@ export function createProfileRuntime(
 		const snapshot = workspace.snapshot();
 		const candidates = findAutoActivateAgentProfileCandidates(snapshot.profiles);
 		if (candidates.length === 0) {
+			if (deps.restoreRememberedSelection?.(ctx)) return;
 			const fallback = chooseDefaultStack([...snapshot.stacks]);
 			workspace.setActiveStack(fallback ? formatResourceKey(fallback.key) : undefined);
 			deps.updateStatus(ctx);

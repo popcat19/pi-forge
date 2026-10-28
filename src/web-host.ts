@@ -68,7 +68,7 @@ export interface WebHostRuntime {
 	getActive(): LoadedPromptStack | undefined;
 	getActiveId(): string | undefined;
 	getSelectedActiveId(): string | undefined;
-	setActive(id: string | undefined): boolean;
+	setActive(id: string | undefined, options?: { remember?: boolean }): boolean;
 	lastActivationError?(): string | undefined;
 	validatePresetSwitch?(target: LoadedPromptStack): string | undefined;
 	reloadStacks(preferredId?: string): Promise<void>;
@@ -223,7 +223,7 @@ export function createWebEditorHost(ctx: ExtensionContext, runtime: WebHostRunti
 		activateStack: (selector) => {
 			const hostError = runtime.activationError?.();
 			if (hostError) return { ok: false, status: 409, error: hostError };
-			if (!runtime.setActive(selector)) {
+			if (!runtime.setActive(selector, { remember: true })) {
 				const error = runtime.lastActivationError?.() ?? `Unknown preset: ${selector}`;
 				const status = !ctx.isProjectTrusted() ? 403 : resolveStack(runtime, selector) ? 409 : 404;
 				return { ok: false, status, error };
@@ -231,7 +231,7 @@ export function createWebEditorHost(ctx: ExtensionContext, runtime: WebHostRunti
 			return { ok: true, activeId: runtime.getActiveId(), stacks: stackSummaries(runtime.getStacks(), runtime.getActive()) };
 		},
 		disableStacks: () => {
-			if (!runtime.setActive("none")) {
+			if (!runtime.setActive("none", { remember: true })) {
 				const error = runtime.lastActivationError?.() ?? "Failed to disable preset";
 				const status = !ctx.isProjectTrusted() ? 403 : 409;
 				return { ok: false, status, error };
