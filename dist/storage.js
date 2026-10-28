@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { activeStateProjectKey } from "./active-state.js";
+import { activeStateProjectKey, FORGE_ACTIVE_STATE_PROJECT_KEY_PATTERN } from "./active-state.js";
 import { parseResourceSelector } from "./resource-identity.js";
 import { existsSync, lstatSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -104,8 +104,15 @@ export function readRememberedPreset(cwd) {
         const parsed = parseResourceSelector(value.selector);
         if (!parsed.ok || !parsed.selector.scope)
             return undefined;
-        if (parsed.selector.scope === "project" && value.projectKey !== activeStateProjectKey(cwd))
-            return undefined;
+        if (parsed.selector.scope === "project") {
+            const projectKey = activeStateProjectKey(cwd);
+            if (!projectKey || !FORGE_ACTIVE_STATE_PROJECT_KEY_PATTERN.test(projectKey))
+                return undefined;
+            if (typeof value.projectKey !== "string" || !FORGE_ACTIVE_STATE_PROJECT_KEY_PATTERN.test(value.projectKey))
+                return undefined;
+            if (value.projectKey !== projectKey)
+                return undefined;
+        }
         return value.selector;
     }
     catch {
